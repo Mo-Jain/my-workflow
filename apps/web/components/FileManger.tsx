@@ -14,15 +14,16 @@ import { use, useEffect, useState } from "react"
 
 
 
-export default function RecentlyAccessed( 
-  { headers,items,toggleFavorite,isFavorite,iconOne,iconTwo } :
+export default function FileManager( 
+  { headers,items,toggleFavorite,isFavorite,isSelect,iconOne,iconTwo } :
   { 
     headers: string[],
     items: any[],
     toggleFavorite: (id: number,index: number) => void,
     isFavorite:boolean,
-    iconOne: JSX.Element;
-    iconTwo: JSX.Element;
+    isSelect:boolean,
+    iconOne: JSX.Element,
+    iconTwo: JSX.Element,
   } 
 ) {
 
@@ -63,12 +64,13 @@ export default function RecentlyAccessed(
           <Table>
             <TableHeader className="bg-gray-100">
               <TableRow className="hover:bg-gray-0 cursor-pointer">
+                {isSelect && 
                 <TableCell className="w-12">
                   <Checkbox
                     checked={selectedItems.length === items.length}
                     onCheckedChange={toggleAll}
                   />
-                </TableCell>
+                </TableCell>}
                 {headers.map((header) => (
                   <TableHead 
                     className="cursor-pointer"
@@ -94,12 +96,13 @@ export default function RecentlyAccessed(
                     selectedItems.includes(item.id) ? "bg-gray-200" : ""
                     } hover:bg-gray-200 cursor-pointer`}
                 >
-                  <TableCell>
+                  {isSelect &&
+                    <TableCell>
                     <Checkbox
                       checked={selectedItems.includes(item.id)}
                       onCheckedChange={() => toggleItem(item.id)}
                     />
-                  </TableCell>
+                  </TableCell>}
                   
                   
                   {keys && keys.map((key,index) => (
