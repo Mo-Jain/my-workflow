@@ -8,31 +8,54 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import FileManager from "./FileManger"
+import { useState } from "react"
+import { getFileIcon } from "@/pages/icon/icon"
+import { useRouter } from "next/navigation"
 
 // Sample data - in a real app this would come from your backend
-const workflows = [
+const workflowsList = [
   {
     id: 1,
     status: "on time",
+    durDate: "",
+    type: "dot",
     workflow: "30079647 - NFA WF - 10/Sep/2024 03:16",
-    currentStep: "NFA Form - 10/Sep/2024 03:16 PM",
-    assignedTo: "Mohit Jain",
-    startDate: "September 10, 2024"
+    currentstep: "NFA Form - 10/Sep/2024 03:16 PM",
+    assignedto: "Mohit Jain",
+    startdate: "September 10, 2024"
   },
   {
     id: 2,
     status: "on time",
+    durDate: "",
+    type: "dot",
     workflow: "30079647 - NFA WF - 04/Nov/2024 03:53",
-    currentStep: "NFA Form - 04/Nov/2024 03:53 PM",
-    assignedTo: "Mohit Jain",
-    startDate: "November 4, 2024"
+    currentstep: "NFA Form - 04/Nov/2024 03:53 PM",
+    assignedto: "Mohit Jain",
+    startdate: "November 4, 2024"
   }
 ]
+
+
+interface Workflow {
+  id: number;
+  status: string;
+  durDate: string;
+  type: string
+  workflow: string;
+  currentstep: string;
+  assignedto: string;
+  startdate: string;
+}
 
 export default function Component(
   {onClose}:
   {onClose:()=>void}
 ) {
+  const [workflows, setWorkflows] = useState<Workflow[]>(workflowsList);
+  const router = useRouter();
+  
   return (
     <div className=" bg-background text-black">
       <div className="p-4">
@@ -46,56 +69,16 @@ export default function Component(
           </Button>
         </div>
 
-        <div className="w-full">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[100px]">Status</TableHead>
-                <TableHead>Step Due Date</TableHead>
-                <TableHead>Workflow</TableHead>
-                <TableHead>Current Step</TableHead>
-                <TableHead>Assigned to</TableHead>
-                <TableHead>Start Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {workflows.map((workflow) => (
-                <TableRow key={workflow.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                      <span className="text-sm text-muted-foreground">
-                        {workflow.status}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell></TableCell>
-                  <TableCell>
-                    <span className="text-sm text-blue-600">
-                      {workflow.workflow}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm">
-                      {workflow.currentStep}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm text-blue-600">
-                      {workflow.assignedTo}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm">
-                      {workflow.startDate}
-                    </span>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <FileManager
+          headers={["Status","Step Due Date","Workflow","CurrentStep","AssignedTo","StartDate"]}
+          items={workflows}
+          hasSelect={false}
+          iconOne={(workflow) =>getFileIcon(workflow.type)}
+        />
       </div>
     </div>
   )
 }
+
+
+///                      

@@ -12,15 +12,18 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Card, CardContent } from "@/components/ui/card"
+import FileManager from "@/components/FileManger"
+import { getFileIcon, getFileThumbnail } from "./icon/icon"
+import GridLayout from "@/components/Gridlayout"
 
 // Sample data - in a real app this would come from your backend
-const folders = [
+const foldersList = [
   {
     id: 1,
     name: "ATMSL RAILWAYS",
     items: "14 items",
     modified: "10/24/2024 2:44 PM",
-    isFavorite: false
+    isFavorite: false 
   },
   {
     id: 2,
@@ -59,9 +62,19 @@ const folders = [
   }
 ]
 
+interface Folder {
+  id: number,
+  name: string,
+  items: string,
+  modified: string,
+  isFavorite: boolean
+}
+
 export default function Enterprise() {
   const [selectedFolders, setSelectedFolders] = React.useState<number[]>([])
-  const [viewType, setViewType] = React.useState<'list' | 'grid'>('list')
+  const [viewType, setViewType] = React.useState<'list' | 'grid'>('list');
+  const [folders, setFolders] = React.useState<Folder[]>(foldersList);
+
 
   const toggleAll = (checked: boolean) => {
     setSelectedFolders(checked ? folders.map(folder => folder.id) : [])
@@ -74,6 +87,21 @@ export default function Enterprise() {
         : [...current, folderId]
     )
   }
+  
+
+  const toggleFavorite = (folderId: number) => {
+    setFolders(prevFolders =>
+      prevFolders.map(folder =>
+        folder.id === folderId ? { ...folder, isFavorite: !folder.isFavorite } : folder
+      )
+    );
+  
+    // Update the original itemsList array
+    const folderIndex = foldersList.findIndex(file => file.id === folderId);
+    if (folderIndex > -1) {
+      foldersList[folderIndex].isFavorite = !foldersList[folderIndex].isFavorite;
+    }
+  };
 
   return (
     <div className="min-h-screen "
@@ -101,101 +129,22 @@ export default function Enterprise() {
 
       <div>
         {viewType === 'list' ? (
-          <div className="w-full">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-100">
-                  <TableCell className="w-12">
-                    <Checkbox
-                      checked={selectedFolders.length === folders.length}
-                      onCheckedChange={toggleAll}
-                    />
-                  </TableCell>
-                  <TableHead>Name</TableHead>
-                  <TableHead className="w-32">Size</TableHead>
-                  <TableHead className="w-48">Modified</TableHead>
-                  <TableHead className="w-12"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {folders.map((folder) => (
-                  <TableRow key={folder.id}>
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedFolders.includes(folder.id)}
-                        onCheckedChange={() => toggleFolder(folder.id)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Folder className="h-4 w-4 text-orange-400" />
-                        {folder.name}
-                      </div>
-                    </TableCell>
-                    <TableCell>{folder.items}</TableCell>
-                    <TableCell>{folder.modified}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                      >
-                        <Star className={`h-4 w-4 ${folder.isFavorite ? 'fill-yellow-400 text-yellow-400' : ''}`} />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+            <>
+              <FileManager
+                headers={["Name","Size","Modified"]}
+                items={folders.map(({  isFavorite, ...rest }) => rest)}
+                toggleFavorite={toggleFavorite}
+                hasSelect={true}
+                iconOne={(file) =>getFileIcon(file.type)}
+              />
+            </>
         ) : (
-          <div className="p-3">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={selectedFolders.length === folders.length}
-                  onCheckedChange={toggleAll}
-                />
-                <span className="text-sm text-muted-foreground">Select all</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">{folders.length} items</span>
-                <ChevronDown className="h-4 w-4" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-              {folders.map((folder) => (
-                <Card key={folder.id} className="group relative">
-                  <CardContent className="p-4">
-                    <div className="absolute top-2 left-2">
-                      <Checkbox
-                        checked={selectedFolders.includes(folder.id)}
-                        onCheckedChange={() => toggleFolder(folder.id)}
-                      />
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <Folder className="h-20 w-20 text-orange-400" />
-                      <div className="mt-2 text-center">
-                        <div className="text-sm font-medium truncate max-w-[150px]">{folder.name}</div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {folder.items}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                      >
-                        <Star className={`h-4 w-4 ${folder.isFavorite ? 'fill-yellow-400 text-yellow-400' : ''}`} />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
+          <GridLayout 
+            items={folders.map((folder)=>({...folder,type:"folder"}))}
+            selectedItems = {selectedFolders}
+            toggleItem = {toggleFolder}
+            toggleAll = {toggleAll}
+            />
         )}
 
         <div className="flex items-center justify-between mt-4 p-2">

@@ -2,17 +2,10 @@ import { ArrowLeft, ChevronDown, FileText, Folder, Search, Star } from "lucide-r
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { useRouter } from "next/router"
 import { useState } from "react"
-import { it } from "node:test"
+import FileManager from "@/components/FileManger"
+import {getFileIcon} from "./icon/icon"
 
 // This is sample data - in a real app this would come from your backend
 const itemsList = [
@@ -57,11 +50,16 @@ export default function Favorites() {
   }
 
   //write code to toggle favorite as well as update the original itemList array
-  const toggleFavorite = (itemId: number, index: number) => {
-    setItems(prevItems =>
+  const toggleFavorite = (itemId: number) => {
+    console.log(itemId);
+    setItems(prevItems => {
+      console.log(prevItems);
+      return (
       prevItems.map(item =>
         item.id === itemId ? { ...item, isFavorite: !item.isFavorite } : item
       )
+    )
+    }
     );
   
     // Update the original itemsList array
@@ -109,66 +107,13 @@ export default function Favorites() {
       </div>
 
       <div>
-        <div className="w-full">
-          <Table>
-            <TableHeader className="bg-gray-100">
-              <TableRow>
-                <TableCell className="w-12">
-                  <Checkbox
-                    checked={selectedItems.length === items.length}
-                    onCheckedChange={toggleAll}
-                  />
-                </TableCell>
-                <TableHead>Name</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead className="w-12"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell className="font-medium" colSpan={4}>
-                  Ungrouped
-                </TableCell>
-              </TableRow>
-              {items.map((item,index) => (
-                <TableRow
-                    key={item.id}
-                    className={`${
-                    selectedItems.includes(item.id) ? "bg-gray-200" : ""
-                    } hover:bg-gray-200`}
-                >
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedItems.includes(item.id)}
-                      onCheckedChange={() => toggleItem(item.id)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {item.type === 'folder' ? (
-                        <Folder className="h-4 w-4 text-blue-500" />
-                      ) : (
-                        <FileText className="h-4 w-4 text-red-500" />
-                      )}
-                      {item.name}
-                    </div>
-                  </TableCell>
-                  <TableCell>{item.location}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => toggleFavorite(item.id,index)}
-                    >
-                      <Star className={`h-4 w-4 ${item.isFavorite ? 'fill-yellow-400 text-yellow-400' : ''}`}  />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <FileManager
+          headers={["Name","Location"]}
+          items={items.map(({ isFavorite, ...rest }) => rest)}
+          toggleFavorite={toggleFavorite}
+          hasSelect={true}
+          iconOne={(file) =>getFileIcon(file.type)}
+        />
 
         <div className="mt-4 text-sm text-muted-foreground">
           <p>To personalize the Favorites list, you can push your favorite group to the top.</p>

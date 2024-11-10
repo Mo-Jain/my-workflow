@@ -83,7 +83,7 @@ export default function MyAssignment() {
             </TableHeader>
             <TableBody>
               {assignments.map((assignment) => (
-                <TableRow key={assignment.id}>
+                <TableRow className="cursor-pointer" key={assignment.id} onClick={()=> router.push('/nfaform')}>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Workflow className="h-4 w-4 text-blue-500" />

@@ -208,12 +208,22 @@ export default function NFAForm() {
             </div>
             
           </div>
-          <div className="space-y-2 w-1/2">
-                <Label htmlFor="workflow-name">
-                  Workflow Name <span className="text-red-500">*</span>
-                </Label>
-                <Input id="workflow-name" required />
+          <div className="space-y-2">
+            <Label htmlFor="clause">
+              DocSet type <span className="text-red-500">*</span>
+            </Label>
+            <div className="flex gap-2 w-1/2">
+              <Select required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Clause" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="nfa">NFA</SelectItem>
+                  <SelectItem value="letter">Letter</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+          </div>
             
             
             <div className="grid grid-cols-2 gap-x-12 gap-y-6">
@@ -221,19 +231,19 @@ export default function NFAForm() {
               <div>
                 <div className="space-y-2">
                     <Label htmlFor="workflow-name">
-                      Workflow Name <span className="text-red-500">*</span>
+                      Subject<span className="text-red-500">*</span>
                     </Label>
                     <Input id="workflow-name" required />
                 </div>
                 <div className="space-y-2 ">
                     <Label htmlFor="workflow-name">
-                      Workflow Name <span className="text-red-500">*</span>
+                      Project <span className="text-red-500">*</span>
                     </Label>
                     <Input id="workflow-name" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="workflow-role">
-                    Multiple Workflow Role <span className="text-red-500">*</span>
+                    Remarks <span className="text-red-500">*</span>
                   </Label>
                   <Textarea 
                     id="workflow-role"
@@ -245,23 +255,43 @@ export default function NFAForm() {
               {/* Right Column */}
               <div className="space-y-2">
                   <Label htmlFor="workflow-name">
-                    Workflow Name <span className="text-red-500">*</span>
+                    To <span className="text-red-500">*</span>
                   </Label>
                   <Input id="workflow-name" required />
               </div>
             </div>
             <div className="space-y-2">
-                  <Label htmlFor="workflow-name">
-                    Workflow Name <span className="text-red-500">*</span>
-                  </Label>
-                  <Input id="workflow-name" required />
+              <Label htmlFor="clause">
+                Final Approval Required? <span className="text-red-500">*</span>
+              </Label>
+              <div className="flex gap-2 w-1/2">
+                <Select required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Clause" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="nfa">NFA</SelectItem>
+                    <SelectItem value="letter">Letter</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="space-y-2">
-                  <Label htmlFor="workflow-name">
-                    Workflow Name <span className="text-red-500">*</span>
-                  </Label>
-                  <Input id="workflow-name" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="clause">
+                Notification required? <span className="text-red-500">*</span>
+              </Label>
+              <div className="flex gap-2 w-1/2">
+                <Select required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Clause" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="nfa">NFA</SelectItem>
+                    <SelectItem value="letter">Letter</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+            </div>
 
           <div className="flex justify-start gap-4">
             <Button type="button" variant="outline">
