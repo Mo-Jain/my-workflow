@@ -6,4 +6,4 @@ app.use(express.json())
 
 app.use("/api/v1", router)
 
-app.listen(process.env.PORT || 3000)
+app.listen(3001, () => console.log('Server running on port 3000'));

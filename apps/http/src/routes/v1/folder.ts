@@ -1,106 +1,106 @@
 import { Router} from "express";
 import { middleware } from "../../middleware";
-import client from "@repo/db/src";
-import { deleteFolderSchema, folderSchema, updateFolderSchema } from "../../types";
+import client from "@repo/db/client";
+import { deleteFolderSchema, createFolderSchema, updateFolderSchema } from "../../types";
+import { formatItem } from ".";
 
 export const folderRouter = Router();   
 
-folderRouter.get("/user",middleware, async (req, res) => {
-
-    const user = await client.user.findFirst({
-        where: {
-            id: req.userId
-        },
-        include: {
-            folders: {
-                include: {
-                    subfolders: true,
-                    Favorite: true
-                }
-            }
-        }
-    })
-
-    if(!user){
-        res.status(403).json({message: "User not found"})
-        return;
-    }
-    const userFolder = user?.folders.map((folder:any)=>({
-                            id: folder.id,
-                            name: folder.name,
-                            items: folder.subfolders.length,
-                            modified: folder.createdAt,
-                            isFavorite: folder.Favorite.some((fav:any) => fav.id === user?.id)
-                        }))
-    res.json({
-        userFolder
-    })
-})
 
 folderRouter.post("/", middleware, async (req, res) => {
-    const parsedData = folderSchema.safeParse(req.body)
+    const parsedData = createFolderSchema.safeParse(req.body)
     if (!parsedData.success) {
         res.status(400).json({message: "Wrong folder input format"})
         return
     }
+
+    try {
+        const parentFolder = await client.folder.findFirst({
+            where: {
+                id: parsedData.data.parentFolderId,
+            }
+        });
+
+        if(parentFolder?.creatorId != req.userId){
+            res.status(403).json({message: "Not Authorized to create"})
+            return
+        }
+    
+        await client.folder.create({
+            data: {
+                name: parsedData.data.name,
+                creatorId: req.userId!,
+                parentFolderId: parsedData.data.parentFolderId,
+                path: parentFolder?.path + "/" + parentFolder?.name
+            }
+        })
+
+        res.json({
+            message: "Folders created"
+        })
+    } catch(e) {    
+        res.status(400).json({message: "Folder not found"})
+    }
+})
+
+folderRouter.get("/:folderId", middleware, async (req, res) => {
     const folder = await client.folder.findFirst({
         where: {
-            id: parsedData.data.parentFolderId
-        }
-    });
-
-    if(folder?.userId != req.userId){
-        res.status(403).json({message: "Not Authorized to create"})
-        return
-    }
- 
-    await client.folder.create({
-        data: {
-            name: parsedData.data.name,
-            userId: req.userId!,
-            parentFolderId: parsedData.data.parentFolderId,
-            enterpriseId: parsedData.data.enterpriseId ?? null
+            id: req.params.folderId
+        },
+        include: {
+            subfolders: {
+                include: {
+                    subfolders: true,
+                    files: true
+                }
+            }
         }
     })
-
+    if (!folder) {
+        res.status(404).json({ message: "Folder not found" });
+        return;
+    }
+    const folderData = folder.subfolders.map((folder:any) => formatItem(folder, true));
     res.json({
-        message: "Folders created"
+        folderData
     })
 })
 
 
-folderRouter.put("/:id", middleware, async (req, res) => {
+folderRouter.put("/:folderId", middleware, async (req, res) => {
     const parsedData = updateFolderSchema.safeParse(req.body);
     if (!parsedData.success) {
         res.status(400).json({message: "Wrong folder input format"})
         return
     }
-    const folder = await client.folder.findFirst({
-        where: {
-            id: req.params.id
+
+    try {
+        const folder = await client.folder.findFirst({
+            where: {
+                id: req.params.folderId
+            }
+        });
+
+        if(folder?.creatorId != req.userId){
+            res.status(403).json({message: "Not Authorized to update"})
+            return
         }
-    });
 
-    if(folder?.userId != req.userId){
-        res.status(403).json({message: "Not Authorized to update"})
-        return
+        await client.folder.update({
+            where: {
+                id: req.params.folderId
+            }, 
+            data: {
+                name: parsedData.data.name,
+                isFavorite: parsedData.data.isFavorite ?? folder?.isFavorite
+            }
+        })
+
+        res.json({message: "Folder updated successfully"})
+    } catch(e) {    
+        res.status(400).json({message: "Folder not found"})
     }
-
-    await client.folder.update({
-        where: {
-            id: req.params.id
-        }, 
-        data: {
-            name: parsedData.data.name
-        }
-    })
-
-    if (!folder) {  
-        res.status(404).json({ message: "Folder not found" }) 
-        return  
-    }
-
-    res.json({message: "Folder updated successfully"})
 })
 
 folderRouter.delete("/:id", middleware, async (req, res, next) => {
@@ -109,21 +109,27 @@ folderRouter.delete("/:id", middleware, async (req, res, next) => {
         res.status(400).json({message: "Wrong folder input format"})
         return  
     }
-    const folder = await client.folder.findFirst({
-        where: {
-            id: parsedData.data.id
+
+    try {
+        const folder = await client.folder.findFirst({
+            where: {
+                id: parsedData.data.id
+            }
+        })
+        if(folder?.creatorId != req.userId){
+            res.status(403).json({message: "Not Authorized to delete"})
+            return
         }
-    })
-    if(folder?.userId != req.userId){
-        res.status(403).json({message: "Not Authorized to delete"})
-        return
+        await client.folder.delete({
+            where: {
+                id: parsedData.data.id
+            }
+        })
+        
+        res.json({message: "Folder deleted successfully"})  
     }
-    await client.folder.delete({
-        where: {
-            id: parsedData.data.id
-        }
-    })
-    
-    res.json({message: "Folder deleted successfully"})  
+    catch(e) {  
+        res.status(400).json({message: "Folder not found"})
+    }
 })
 

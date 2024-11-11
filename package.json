@@ -1,5 +1,5 @@
 {
-  "name": "Opentext",
+  "name": "opentext",
   "private": true,
   "scripts": {
     "build": "turbo build",

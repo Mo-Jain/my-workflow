@@ -1,13 +1,52 @@
+
 import { Router } from "express";
 import jwt from "jsonwebtoken";
 
 import { JWT_PASSWORD } from "../../config";
 import { SigninSchema, SignupSchema } from "../../types";
 import {hash, compare} from "../../scrypt";
-import client from "@repo/db/src";
+import client from "@repo/db/client";
 import { middleware } from "../../middleware";
+import { folderRouter } from "./folder";
+import { fileRouter } from "./file";
+import { favoritesRouter } from "./favorites";
+import { recentlyViewedRouter } from "./recentlyviewed";
+import { assignmentRouter } from "./assignment";
+import { workflowRouter } from "./workflow";
 
 export const router = Router();
+
+export const formatItem = (item: any, isFolder: boolean) => ({
+    id: item.id,
+    name: item.name,
+    type: isFolder ? "folder" : item.type,
+    items: isFolder ? item.subfolders.length + item.files.length : undefined,
+    size: !isFolder ? item.size : undefined,
+    modified: item.createdAt,
+    isFavorite: item.isFavorite
+});
+
+router.post("/enterprise", middleware, async (req, res) => {
+    try
+    {
+        await client.folder.create({
+            data: {
+                name: "enterpise",
+                creatorId: req.userId!,
+                parentFolderId: null,
+                path: "root"
+            }
+        })
+
+        res.json({
+            message: "Enterprise Folder created successfully"
+        })      
+    }
+    catch(e)
+    {
+        res.status(400).json({message: "Internal server error"})
+    }
+})
 
 router.post("/signup", async (req, res) => {
     console.log("inside signup")
@@ -22,17 +61,32 @@ router.post("/signup", async (req, res) => {
     const hashedPassword = await hash(parsedData.data.password)
 
     try {
-         const user = await client.user.create({
+        const user = await client.user.create({
             data: {
                 username: parsedData.data.username,
                 password: hashedPassword
             }
         })
+
+        await client.folder.create({
+            data: {
+                name: "personal_workspace",
+                creatorId: user.id,
+                parentFolderId: null,
+                path: "root"
+            }
+        })
+
+        const token = jwt.sign({
+            userId: user.id,
+        }, JWT_PASSWORD);
+
         res.json({
-            userId: user.id
+            message:"User created successfully",
+            token
         })
     } catch(e) {
-        console.log("erroer thrown")
+        console.log("error thrown")
         console.log(e)
         res.status(400).json({message: "User already exists"})
     }
@@ -68,6 +122,7 @@ router.post("/signin", async (req, res) => {
         }, JWT_PASSWORD);
 
         res.json({
+            message:"User signed in successfully",
             token
         })
     } catch(e) {
@@ -75,33 +130,74 @@ router.post("/signin", async (req, res) => {
     }
 })
 
+
 router.get("/enterprise",middleware, async (req, res) => {
-    const enterprise = await client.enterprise.findFirst({
+    const enterprise = await client.folder.findFirst({
         where: {
-            id: 1
+            parentFolderId: null,
+            name:"enterprise",
         },
         include: {
-            folders: true
+            subfolders: {
+                include: {
+                    subfolders: true,
+                    files: true
+                }
+            }
         }
     })
 
     if (!enterprise) {
-        res.status(404).json({ message: "Enterprise not found" });
+        res.status(404).json({ message: "Enterprise folder not found" });
         return;
     }
 
-    const enterpriseFolders = enterprise.folders.map((folder) => {
-        return {
-            id: folder.id,
-            name: folder.name,
-            userId: folder.userId,
-            createdAt: folder.createdAt,
-            updatedAt: folder.updatedAt,
-        };
+    const enterpriseFolder = enterprise.subfolders.map((folder:any)=>formatItem(folder, true));
+    
+    res.json({
+        enterpriseFolder
+    })
+})
+
+router.get("/personal",middleware, async (req, res) => {
+    const personalWorkspace = await client.folder.findFirst({
+        where: {
+            parentFolderId: null,
+            name: "personal_workspace",
+            creatorId: req.userId
+        },
+        include: {
+            files: true,
+            subfolders: {
+                include: {
+                    subfolders: true,
+                    files: true
+                }
+            }
+        }
     });
 
-    res.status(200).json({ enterpriseFolders });
+    if (!personalWorkspace) {
+        res.status(404).json({ message: "Favorites folder not found" });
+        return;
+    }
+
+    const personalFolder = personalWorkspace.subfolders.map((folder: any) => formatItem(folder, true));
+    const personalFiles = personalWorkspace.files.map((file: any) => formatItem(file, false));
+
+    res.json({
+        personalFolder,
+        personalFiles
+    })
+
 })
 
 
-    
+
+router.use("/folder", folderRouter);
+router.use("/file", fileRouter);
+router.use("/favorite", favoritesRouter);
+router.use("/recentlyviewed", recentlyViewedRouter);
+router.use("/assignment", assignmentRouter);
+router.use("/workflow", workflowRouter);
+

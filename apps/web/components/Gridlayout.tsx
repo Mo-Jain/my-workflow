@@ -8,11 +8,12 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { SortableItem } from "./Sortable";
 
-const GridLayout = ({ items, selectedItems, toggleItem, toggleAll }:
+const GridLayout = ({ items, setItems, selectedItems, toggleItem, toggleAll }:
     { 
-        items: any[], 
+        items: any[]; // Define items more specifically if possible
+        setItems: React.Dispatch<React.SetStateAction<any[]>>; // Update the type here 
         selectedItems: number[], 
-        toggleItem: (id: number) => void, 
+        toggleItem: (id: number, checked: boolean) => void,
         toggleAll: (checked:boolean) => void 
     }
 ) => {
@@ -59,7 +60,7 @@ const GridLayout = ({ items, selectedItems, toggleItem, toggleAll }:
                     <div className={`absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity ${selectedItems.includes(item.id)?'opacity-100':'opacity-0'}`}>
                       <Checkbox
                         checked={selectedItems.includes(item.id)}
-                        onCheckedChange={() => toggleItem(item.id)}
+                        onCheckedChange={(checked) => toggleItem(item.id, checked as boolean)}
                       />
                     </div>
                     <div className="flex flex-col items-center">

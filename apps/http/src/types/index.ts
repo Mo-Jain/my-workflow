@@ -15,20 +15,76 @@ export const UpdateMetadataSchema = z.object({
     avatarId: z.string()
 })
 
-export const folderSchema = z.object({
+export const createFolderSchema = z.object({
     name: z.string(),
     parentFolderId: z.string(),
-    enterpriseId: z.number().optional(),
 })
+
 
 export const deleteFolderSchema = z.object({
   id: z.string(),
-  enterpriseId: z.number().optional(),
 })
 
+
+
 export const updateFolderSchema = z.object({
-  name: z.string()
+  name: z.string(),
+  isFavorite: z.boolean().optional()
 })
+
+export const createFileSchema = z.object({
+  name: z.string(),
+  parentFolderId: z.string(),
+  size: z.string(),
+  type: z.string(),
+  modifiedAt: z.string(),
+})
+
+export const deleteFileSchema = z.object({
+  id: z.string(),
+})
+
+export const updateFileSchema = z.object({
+  name: z.string(),
+  isFavorite: z.boolean().optional()
+})
+
+export const createFavoriteSchema = z.object({
+  name: z.string(),
+  type: z.string(),
+  fileId: z.string().optional(),
+  folderId: z.string().optional(),
+  parentFolderId: z.string(),
+})
+
+export const createRecentlyViewedSchema = z.object({
+  fileId: z.string()
+})
+export const createWorkflowSchema = z.object({
+  dueDate: z.date().optional(),
+  workflowName: z.string(),
+  currentStep: z.string(),
+})
+
+export const updateWorkflowSchema = z.object({
+  status: z.string().optional(),
+  assignedTo: z.string().optional(),
+})
+
+export const createAssignmentSchema = z.object({
+  name: z.string(),
+  location: z.string(),
+  dueDate: z.date().optional(),
+  priority: z.string().optional(),
+  status: z.string().optional(),
+})
+
+export const updateAssignmentSchema = z.object({
+  location: z.string(),
+})
+
+
+
 
 
 declare global {

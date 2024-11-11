@@ -18,7 +18,7 @@ export const middleware = (req: Request, res: Response, next: NextFunction) => {
         req.userId = decoded.userId
         next()
     } catch(e) {
-        res.status(401).json({message: "Unauthorized"})
+        res.status(403).json({message: "Unauthorized"})
         return
     }
 }

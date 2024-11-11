@@ -1,5 +1,7 @@
 'use client'
 
+import { useParams } from "next/navigation";
+import React from "react"
 import { Badge, ChevronDown, FileText, Folder, LayoutGrid, LayoutList, Search, Star, Plus, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -15,7 +17,6 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import { useState, useRef, useCallback } from "react"
 import FileManager from "@/components/FileManger"
-import { getFileIcon, getFileThumbnail } from "./icon/icon"
 import GridLayout from "@/components/Gridlayout"
 import {
   Dialog,
@@ -33,70 +34,32 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "@/hooks/use-toast"
-
+import { getFileIcon } from "../icon/icon";
 
 const filesList = [
-  {
-    id: 1,
-    name: "30079647-NFA-1980-PROJ-Mundra-2023-11-00002_6485488",
-    type: "folder",
-    items: "1 item",
-    modified: "11/22/2023 8:12 PM",
-    isFavorite: true
-  },
-  {
-    id: 2,
-    name: "607131209D",
-    type: "folder",
-    items: "3 items",
-    modified: "02/16/2024 3:28 PM",
-    isFavorite: false
-  },
-  {
-    id: 3,
-    name: "CFO APPROVAL.xlsx",
-    type: "excel",
-    size: "47 KB",
-    modified: "01/06/2024 10:24 AM",
-    isFavorite: false
-  },
-  {
-    id: 4,
-    name: "Invoice Delay approval",
-    type: "folder",
-    items: "6 items",
-    modified: "01/16/2024 4:14 PM",
-    isFavorite: true
-  },
-  {
-    id: 5,
-    name: "NFA for china visit approval.pdf",
-    type: "pdf",
-    size: "1 MB",
-    modified: "11/20/2023 2:46 PM",
-    isFavorite: false
-  },
-  {
-    id: 6,
-    name: "Post-facto for Nextroot.pdf",
-    type: "pdf",
-    size: "71 KB",
-    modified: "07/26/2023 12:28 PM",
-    isFavorite: false
+    
+    {
+      id: 6,
+      name: "Post-facto for Nextroot.pdf",
+      type: "pdf",
+      size: "71 KB",
+      modified: "07/26/2023 12:28 PM",
+      isFavorite: false
+    }
+  ]
+  
+  interface File {
+    id: number,
+    name: string,
+    type: string,
+    items?: string,
+    size?: string,
+    modified: string,
+    isFavorite: boolean
   }
-]
 
-interface File {
-  id: number,
-  name: string,
-  type: string,
-  items?: string,
-  size?: string,
-  modified: string,
-  isFavorite: boolean
-}
-
-export default function PersonalWorkspace() {
+const folderId = () => {
+  const folderId = useParams()?.folderId;
   const [selectedFiles, setSelectedFiles] = useState<number[]>([])
   const [viewType, setViewType] = useState<'list' | 'grid'>('list')
   const [files, setFiles] = useState<File[]>(filesList)
@@ -309,5 +272,7 @@ export default function PersonalWorkspace() {
         )}
       </div>
     </div>
-  )
-}
+  );
+};
+
+export default folderId;
