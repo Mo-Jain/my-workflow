@@ -3,7 +3,7 @@ import z from "zod";
 export const SignupSchema = z.object({
     username: z.string(),
     password: z.string(),
-    type: z.enum(["user", "admin"]),
+    name: z.string(),
 })
 
 export const SigninSchema = z.object({
@@ -25,8 +25,6 @@ export const deleteFolderSchema = z.object({
   id: z.string(),
 })
 
-
-
 export const updateFolderSchema = z.object({
   name: z.string(),
   isFavorite: z.boolean().optional()
@@ -37,11 +35,11 @@ export const createFileSchema = z.object({
   parentFolderId: z.string(),
   size: z.string(),
   type: z.string(),
-  modifiedAt: z.string(),
+  modifiedAt: z.date().optional(),
 })
 
 export const deleteFileSchema = z.object({
-  id: z.string(),
+  fileId: z.string(),
 })
 
 export const updateFileSchema = z.object({

@@ -48,19 +48,20 @@ workflowRouter.post("/", middleware, async (req, res) => {
             }
         })
 
-        await client.workflows.create({
-            data: {
-                userId: req.userId!,
-                dueDate: parsedData.data.dueDate ?? null,
-                workflowName: parsedData.data.workflowName,
-                currentStep: parsedData.data.currentStep,
-                assignedTo: user?.username!,
-                startDate: new Date()
-            }
-        })
+        const workflow = await client.workflows.create({
+                            data: {
+                                userId: req.userId!,
+                                dueDate: parsedData.data.dueDate ?? null,
+                                workflowName: parsedData.data.workflowName,
+                                currentStep: parsedData.data.currentStep,
+                                assignedTo: user?.name!,
+                                startDate: new Date()
+                            }
+                        })
 
         res.json({
-            message: "Workflow created successfully"
+            message: "Workflow created successfully",
+            id: workflow.id
         })
     } catch (e) {
         res.status(400).json({ message: "Internal server error" })

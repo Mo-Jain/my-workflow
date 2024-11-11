@@ -16,13 +16,7 @@ recentlyViewedRouter.get("/",middleware, async (req, res) => {
                 creatorId: req.userId
             },
             include: {
-                files: true,
-                subfolders: {
-                    include: {
-                        subfolders: true,
-                        files: true
-                    }
-                }
+                files: true
             }
         })
 
@@ -30,6 +24,8 @@ recentlyViewedRouter.get("/",middleware, async (req, res) => {
             res.status(404).json({ message: "Recently viewed folder not found" });
             return;
         }
+
+        console.log("recently viewed : ", recentlyViewed);
 
         function getFilePath(path: string) {
             const pathArray = path.split('/');
@@ -75,16 +71,18 @@ recentlyViewedRouter.post("/", middleware, async (req, res) => {
             return
         }
 
-        await client.recentlyViewed.create({
+        const recentlyViewedFiles = await client.recentlyViewed.create({
             data: {
-                userId: req.userId!,
                 fileId: parsedData.data.fileId,
+                userId: req.userId!,
                 lastViewedAt: new Date()
             }
         })
 
+        
         res.json({
-            message: "File added to recently viewed list"
+            message: "File added to recently viewed list",
+            recentlyViewedFiles
         })
     } catch (e) {
         res.status(400).json({ message: "Internal server error" })

@@ -29,9 +29,21 @@ export const formatItem = (item: any, isFolder: boolean) => ({
 router.post("/enterprise", middleware, async (req, res) => {
     try
     {
+        //this is to check if the enterprise folder already exists but it is not working
+        const enterpriseFolder = await client.folder.findFirst({
+            where: {
+                parentFolderId: null,
+                name:"enterprise",
+            }
+        })
+
+        if(enterpriseFolder){
+            res.status(400).json({message: "Enterprise folder already exists"})
+            return
+        }
         await client.folder.create({
             data: {
-                name: "enterpise",
+                name: "enterprise",
                 creatorId: req.userId!,
                 parentFolderId: null,
                 path: "root"
@@ -58,24 +70,26 @@ router.post("/signup", async (req, res) => {
         return
     }
 
-    const hashedPassword = await hash(parsedData.data.password)
-
     try {
+        const hashedPassword = await hash(parsedData.data.password)
+        
         const user = await client.user.create({
             data: {
-                username: parsedData.data.username,
-                password: hashedPassword
+                usermail: parsedData.data.username,
+                password: hashedPassword,
+                name: parsedData.data.name,
             }
         })
 
-        await client.folder.create({
-            data: {
-                name: "personal_workspace",
-                creatorId: user.id,
-                parentFolderId: null,
-                path: "root"
-            }
-        })
+        const personal = await client.folder.create({
+                            data: {
+                                name: "personal_workspace",
+                                creatorId: user.id,
+                                parentFolderId: null,
+                                path: "root"
+                            }
+                        })
+        console.log("personal : ", personal);
 
         const token = jwt.sign({
             userId: user.id,
@@ -102,7 +116,7 @@ router.post("/signin", async (req, res) => {
     try {
         const user = await client.user.findUnique({
             where: {
-                username: parsedData.data.username
+                usermail: parsedData.data.username
             }
         })
         

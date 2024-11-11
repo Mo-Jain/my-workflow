@@ -28,7 +28,7 @@ assignmentRouter.get("/", middleware, async (req, res) => {
             dueDate: assignment.dueDate ?? null,
             priority: assignment.priority,
             status: assignment.status,
-            from: user?.username,
+            from: user?.name,
         }))
 
         res.json({
@@ -48,19 +48,20 @@ assignmentRouter.post("/", middleware, async (req, res) => {
 
     try {
         
-        await client.assignment.create({
-            data: {
-                userId: req.userId!,
-                name: parsedData.data.name,
-                location: parsedData.data.location,
-                dueDate: parsedData.data.dueDate ?? null,
-                priority: parsedData.data.priority ?? "medium",
-                status: parsedData.data.status ?? "ok",
-            }
-        })
+        const assignment = await client.assignment.create({
+                            data: {
+                                userId: req.userId!,
+                                name: parsedData.data.name,
+                                location: parsedData.data.location,
+                                dueDate: parsedData.data.dueDate ?? null,
+                                priority: parsedData.data.priority ?? "medium",
+                                status: parsedData.data.status ?? "ok",
+                            }
+                        })
 
         res.json({
-            message: "Assignment created successfully"
+            message: "Assignment created successfully",
+            id: assignment.id
         })
     } catch (e) {
         res.status(400).json({ message: "Internal server error" })

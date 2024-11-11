@@ -17,7 +17,7 @@ folderRouter.post("/", middleware, async (req, res) => {
     try {
         const parentFolder = await client.folder.findFirst({
             where: {
-                id: parsedData.data.parentFolderId,
+                id: parsedData.data.parentFolderId ?? null,
             }
         });
 
@@ -25,21 +25,25 @@ folderRouter.post("/", middleware, async (req, res) => {
             res.status(403).json({message: "Not Authorized to create"})
             return
         }
+
+        let name = parsedData.data.name;
+        let message = "Folder created successfully"
     
-        await client.folder.create({
+        const folder = await client.folder.create({
             data: {
-                name: parsedData.data.name,
+                name: name,
                 creatorId: req.userId!,
-                parentFolderId: parsedData.data.parentFolderId,
-                path: parentFolder?.path + "/" + parentFolder?.name
+                parentFolderId: parsedData.data.parentFolderId ?? null,
+                path: parentFolder ? parentFolder?.path + "/" + parentFolder?.name : "root"
             }
         })
 
         res.json({
-            message: "Folders created"
+            message,
+            id: folder.id
         })
     } catch(e) {    
-        res.status(400).json({message: "Folder not found"})
+        res.status(400).json({message: "Folder already exists"})
     }
 })
 
@@ -87,6 +91,9 @@ folderRouter.put("/:folderId", middleware, async (req, res) => {
             return
         }
 
+        let name = parsedData.data.name;
+        let message = "Folder updated successfully";
+        
         await client.folder.update({
             where: {
                 id: req.params.folderId
@@ -104,11 +111,12 @@ folderRouter.put("/:folderId", middleware, async (req, res) => {
 })
 
 folderRouter.delete("/:id", middleware, async (req, res, next) => {
-    const parsedData = deleteFolderSchema.safeParse(req.body)
+    const parsedData = deleteFolderSchema.safeParse(req.params)
     if (!parsedData.success) {
         res.status(400).json({message: "Wrong folder input format"})
         return  
     }
+    
 
     try {
         const folder = await client.folder.findFirst({

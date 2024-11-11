@@ -1,8 +1,6 @@
-
 import { Router} from "express";
 import { middleware } from "../../middleware";
 import client from "@repo/db/client";
-import { formatItem } from ".";
 import { deleteFileSchema, createFileSchema, updateFileSchema } from "../../types";
 
 export const fileRouter = Router();   
@@ -26,24 +24,28 @@ fileRouter.post("/", middleware, async (req, res) => {
             res.status(403).json({message: "Not Authorized to create"})
             return
         }
-    
-        await client.file.create({
+
+        let name = parsedData.data.name;
+        let message = "File created successfully";
+
+        const file = await client.file.create({
             data: {
-                name: parsedData.data.name,
+                name: name,
                 creatorId: req.userId!,
                 parentFolderId: parsedData.data.parentFolderId,
                 path: parentFolder?.path + "/" + parentFolder?.name,
                 size: parsedData.data.size,
                 type: parsedData.data.type,
-                createdAt: parsedData.data.modifiedAt
+                createdAt: parsedData.data.modifiedAt ?? new Date()
             }
         })
 
         res.json({
-            message: "Folders created"
+            message,
+            id: file.id
         })
     } catch(e) {    
-        res.status(400).json({message: "Folder not found"})
+        res.status(400).json({message: "Internal server error"})
     }
 })
 
@@ -94,36 +96,40 @@ fileRouter.put("/:fileId", middleware, async (req, res) => {
             return
         }
 
-        await client.folder.update({
+        let name = parsedData.data.name;
+        let message = "File updated successfully";
+
+         await client.file.update({
             where: {
-                id: req.params.id
+                id: req.params.fileId
             }, 
             data: {
-                name: parsedData.data.name,
+                name: name,
                 isFavorite: parsedData.data.isFavorite ?? file?.isFavorite
             }
         })
 
-
-        res.json({message: "File updated successfully"})
+        res.json({
+            message
+        })
     } catch(e) {    
         res.status(400).json({message: "File not found"})
     }
 })
 
 fileRouter.delete("/:fileId", middleware, async (req, res, next) => {
-    const parsedData = deleteFileSchema.safeParse(req.body)
+    const parsedData = deleteFileSchema.safeParse(req.params);
     if (!parsedData.success) {
-        res.status(400).json({message: "Wrong folder input format"})
-        return  
+        res.status(400).json({message: "Wrong file input format for update"})
+        return
     }
 
     try {
         const file = await client.file.findFirst({
             where: {
-                id: parsedData.data.id
+                id: parsedData.data.fileId
             }
-        })
+        });
         
         if(file?.creatorId != req.userId){
             res.status(403).json({message: "Not Authorized to delete"})
@@ -132,7 +138,7 @@ fileRouter.delete("/:fileId", middleware, async (req, res, next) => {
 
         await client.file.delete({
             where: {
-                id: parsedData.data.id
+                id: parsedData.data.fileId
             }
         })
         
