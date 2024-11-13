@@ -9,14 +9,12 @@ export const recentlyViewedRouter = Router();
 recentlyViewedRouter.get("/",middleware, async (req, res) => {
     
     try {
-        const recentlyViewed = await client.folder.findFirst({
+        const recentlyViewed = await client.recentlyViewed.findMany({
             where: {
-                parentFolderId: null,
-                name:"recently_viewed",
-                creatorId: req.userId
+                userId: req.userId
             },
-            include: {
-                files: true
+            include :{
+                file:true
             }
         })
 
@@ -25,23 +23,23 @@ recentlyViewedRouter.get("/",middleware, async (req, res) => {
             return;
         }
 
-        console.log("recently viewed : ", recentlyViewed);
 
         function getFilePath(path: string) {
             const pathArray = path.split('/');
             return pathArray[pathArray.length - 1];
         }
 
-        const recentlyViewedFiles = recentlyViewed.files.map((file:any) => ({
-            id: file.id,
-            name: file.name,
-            type: file.type,
-            location: getFilePath(file.path),
-            isFavorite: file.isFavorite,
-            lastAccessed: file.updatedAt,
-            size: file.size,
-            created: file.updatedAt
+        const recentlyViewedFiles = recentlyViewed.map( item => ({
+            id: item.file.id,
+            name: item.file.name,
+            type: item.file.type,
+            location: getFilePath(item.file.path),
+            isFavorite: item.file.isFavorite,
+            lastAccessed: item.lastViewedAt,
+            size: item.file.size,
+            created: item.file.createdAt
         }));
+
 
         res.json({
             recentlyViewedFiles
@@ -71,14 +69,32 @@ recentlyViewedRouter.post("/", middleware, async (req, res) => {
             return
         }
 
-        const recentlyViewedFiles = await client.recentlyViewed.create({
-            data: {
-                fileId: parsedData.data.fileId,
-                userId: req.userId!,
-                lastViewedAt: new Date()
+        const existingRecentlyViewed = await client.recentlyViewed.findFirst({
+            where: {
+                fileId: parsedData.data.fileId
             }
         })
 
+        let recentlyViewedFiles = {}
+        if(existingRecentlyViewed){
+            recentlyViewedFiles = await client.recentlyViewed.update({
+                where:{
+                    id: existingRecentlyViewed.id
+                },
+                data: {
+                    lastViewedAt: new Date()
+                    }
+            })
+        }
+        else{
+            recentlyViewedFiles = await client.recentlyViewed.create({
+                data: {
+                    fileId: parsedData.data.fileId,
+                    userId: req.userId!,
+                    lastViewedAt: new Date()
+                }
+            })
+        }
         
         res.json({
             message: "File added to recently viewed list",

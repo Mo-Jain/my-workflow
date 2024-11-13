@@ -18,6 +18,7 @@ export const UpdateMetadataSchema = z.object({
 export const createFolderSchema = z.object({
     name: z.string(),
     parentFolderId: z.string(),
+    parentFolderName: z.string().optional(),
 })
 
 
@@ -35,7 +36,7 @@ export const createFileSchema = z.object({
   parentFolderId: z.string(),
   size: z.string(),
   type: z.string(),
-  modifiedAt: z.date().optional(),
+  modifiedAt: z.number  ().optional(),
 })
 
 export const deleteFileSchema = z.object({

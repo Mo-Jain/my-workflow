@@ -72,7 +72,8 @@ export default function Component(
         <FileManager
           headers={["Status","Step Due Date","Workflow","CurrentStep","AssignedTo","StartDate"]}
           items={workflows}
-          hasSelect={false}
+          setItems={setWorkflows}
+          hasFavorite={false}
           iconOne={(workflow) =>getFileIcon(workflow.type)}
         />
       </div>

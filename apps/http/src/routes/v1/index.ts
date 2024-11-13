@@ -13,6 +13,7 @@ import { favoritesRouter } from "./favorites";
 import { recentlyViewedRouter } from "./recentlyviewed";
 import { assignmentRouter } from "./assignment";
 import { workflowRouter } from "./workflow";
+import { adminRouter } from "./admin";
 
 export const router = Router();
 
@@ -50,8 +51,11 @@ router.post("/enterprise", middleware, async (req, res) => {
             }
         })
 
+        
+
         res.json({
-            message: "Enterprise Folder created successfully"
+            message: "Enterprise Folder created successfully",
+            ok: true
         })      
     }
     catch(e)
@@ -89,7 +93,6 @@ router.post("/signup", async (req, res) => {
                                 path: "root"
                             }
                         })
-        console.log("personal : ", personal);
 
         const token = jwt.sign({
             userId: user.id,
@@ -97,7 +100,9 @@ router.post("/signup", async (req, res) => {
 
         res.json({
             message:"User created successfully",
-            token
+            token,
+            username:user.usermail,
+            name:user.name
         })
     } catch(e) {
         console.log("error thrown")
@@ -114,7 +119,7 @@ router.post("/signin", async (req, res) => {
     }
 
     try {
-        const user = await client.user.findUnique({
+        const user = await client.user.findFirst({
             where: {
                 usermail: parsedData.data.username
             }
@@ -137,40 +142,49 @@ router.post("/signin", async (req, res) => {
 
         res.json({
             message:"User signed in successfully",
-            token
+            token,
+            username:user.usermail,
+            name:user.name
         })
     } catch(e) {
         res.status(400).json({message: "Internal server error"})
+        
     }
 })
 
 
 router.get("/enterprise",middleware, async (req, res) => {
-    const enterprise = await client.folder.findFirst({
-        where: {
-            parentFolderId: null,
-            name:"enterprise",
-        },
-        include: {
-            subfolders: {
-                include: {
-                    subfolders: true,
-                    files: true
+    try{
+        const enterprise = await client.folder.findFirst({
+            where: {
+                parentFolderId: null,
+                name:"enterprise",
+            },
+            include: {
+                subfolders: {
+                    include: {
+                        subfolders: true,
+                        files: true
+                    }
                 }
             }
+        })
+
+        if (!enterprise) {
+            res.status(404).json({ message: "Enterprise folder not found" });
+            return;
         }
-    })
 
-    if (!enterprise) {
-        res.status(404).json({ message: "Enterprise folder not found" });
-        return;
+        const enterpriseFolder = enterprise.subfolders.map((folder:any)=>formatItem(folder, true));
+        
+        res.json({
+            enterpriseFolder,
+            EnterperiseId: enterprise.id
+        })
     }
-
-    const enterpriseFolder = enterprise.subfolders.map((folder:any)=>formatItem(folder, true));
-    
-    res.json({
-        enterpriseFolder
-    })
+    catch(e){
+        res.status(400).json({message: "No such directories as enterprise"})
+    }
 })
 
 router.get("/personal",middleware, async (req, res) => {
@@ -192,7 +206,7 @@ router.get("/personal",middleware, async (req, res) => {
     });
 
     if (!personalWorkspace) {
-        res.status(404).json({ message: "Favorites folder not found" });
+        res.status(404).json({ message: "Personal folder not found" });
         return;
     }
 
@@ -201,9 +215,76 @@ router.get("/personal",middleware, async (req, res) => {
 
     res.json({
         personalFolder,
-        personalFiles
+        personalFiles,
+        personalWorkspaceId: personalWorkspace.id
     })
 
+})
+
+router.get('/me',middleware, async (req, res) => {
+    try {
+        const user = await client.user.findFirst({
+            where:{
+                id:req.userId
+            }
+        })
+
+        if(!user){
+            res.status(404).json({
+                message: "User not found"
+            })
+            return
+        }
+        res.json({
+            username: user.usermail,
+            name: user.name,
+        })
+    }
+    catch(err){
+        res.json({
+            message: "Internal server error"
+        })
+    }
+})
+
+router.delete("/me", middleware, async (req, res) => {
+    try {
+        const user = await client.user.findFirst({
+            where:{
+                id:req.userId
+            }
+        })
+        if(!user){
+            res.status(404).json({
+                message: "User not found"
+            })
+            return
+        }
+
+        // Delete all associated data in a specific order
+        await client.file.deleteMany({ where: { creatorId: req.userId } });
+        await client.folder.deleteMany({ where: { creatorId: req.userId } });
+        await client.recentlyViewed.deleteMany({ where: { userId: req.userId } });
+        await client.workflows.deleteMany({ where: { userId: req.userId } });
+        await client.assignment.deleteMany({ where: { userId: req.userId } });
+
+        // Finally, delete the user after all related data is deleted
+        await client.user.delete({
+            where: {
+                id: req.userId
+            }
+        });
+
+        res.json({
+            message: "User deleted successfully",
+            ok: true
+        })
+    }
+    catch(err){
+        res.json({
+            message: "Internal server error"
+        })
+    }
 })
 
 
@@ -214,4 +295,5 @@ router.use("/favorite", favoritesRouter);
 router.use("/recentlyviewed", recentlyViewedRouter);
 router.use("/assignment", assignmentRouter);
 router.use("/workflow", workflowRouter);
+router.use("/admin", adminRouter);
 

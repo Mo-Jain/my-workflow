@@ -1,4 +1,4 @@
-import { Star, Copy, Clipboard } from "lucide-react";
+import { Star, Copy, Clipboard, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -25,37 +25,40 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { SortableItem } from "./Sortable";
+import axios from "axios";
+import { BASE_URL } from "@/next.config";
+import { toaster } from "@/pages/admin";
 
 interface FileManagerProps {
   headers: string[];
   items: any[]; // Define items more specifically if possible
   setItems: React.Dispatch<React.SetStateAction<any[]>>; // Update the type here
-  toggleFavorite?: (id: number) => void;
-  hasSelect: boolean;
+  hasFavorite: boolean;
+  parentFolderId: string;
   iconOne?: (item: any) => JSX.Element;
   iconTwo?: (item: any) => JSX.Element;
-  copySelectedItems?: () => void;
-  pasteItems?: () => void;
-  clipboardRef?: any;
-  toggleAll: (checked: boolean) => void;
-  toggleItem: (itemId: number,checked: boolean) => void;
-  selectedItems: number[];
+  copiedItems?: any;
+  setCopiedItems?: React.Dispatch<React.SetStateAction<any>>;
+  toggleAll?: (checked: boolean) => void;
+  toggleItem?: (itemId: string,checked: boolean) => void;
+  selectedItems?: string[];
+  setSelectedItems?: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 export default function FileManager({
   headers,
   items,
   setItems,
-  toggleFavorite,
-  hasSelect,
+  hasFavorite,
+  parentFolderId,
   iconOne,
   iconTwo,
-  copySelectedItems,
-  pasteItems,
-  clipboardRef,
+  copiedItems,
+  setCopiedItems,
   toggleAll,
   toggleItem,
   selectedItems,
+  setSelectedItems,
 }: FileManagerProps) {
   const [sortConfig, setSortConfig] = useState<{
     key: string;
@@ -103,21 +106,173 @@ export default function FileManager({
       });
     }
   };
+  
 
-  return (
+  const toggleFavoriteItem = async (itemId: string) => {
+    setItems(items.map(item => 
+      item.id === itemId ? { ...item, isFavorite: !item.isFavorite } : item
+    ))
+    try{
+      const type = items.find(item => item.id === itemId).type;
+
+      if(type === "folder"){
+        await axios.put(`${BASE_URL}/api/v1/folder/${itemId}`, {
+          name: items.find(item => item.id === itemId).name,
+          isFavorite: !items.find(item => item.id === itemId).isFavorite,
+        },{
+          headers:{
+            "Content-type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`
+          }
+        });
+        return;
+      }
+      await axios.put(`${BASE_URL}/api/v1/file/${itemId}`, {
+        name: items.find(item => item.id === itemId).name,
+        isFavorite: !items.find(item => item.id === itemId).isFavorite,
+      },{
+        headers:{
+          "Content-type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        }
+      });
+      return;
+    }
+      catch(e){
+        console.log(e);
+      }
+  };
+  const createUniqueName = (name: string) => {
+    let uniqueName = name;
+    let counter = 1;
+
+    const extensionIndex = uniqueName.lastIndexOf('.');
+    const baseName = extensionIndex !== -1 ? uniqueName.slice(0, extensionIndex) : uniqueName;
+    const extension = extensionIndex !== -1 ? uniqueName.slice(extensionIndex) : '';
+
+    while (items.some(item => item.name === uniqueName)) {
+        uniqueName = `${baseName}(${counter})${extension}`;
+        counter++;
+    }
+
+    return uniqueName;
+  };
+
+  const deleteItems = async () => {
+    if (!selectedItems || selectedItems.length === 0) return;
+    const itemsToDelete = items.filter((item) => selectedItems.includes(item.id))
+    setSelectedItems && setSelectedItems([]);
+    for (const item of itemsToDelete) {
+      try {
+        if(item.type === "folder") {  
+          await axios.delete(`${BASE_URL}/api/v1/folder/${item.id}`, {
+            headers: {
+              "Content-type": "application/json",
+              "Authorization": `Bearer ${localStorage.getItem("token")}`
+            }
+          });
+        }
+        else{
+          await axios.delete(`${BASE_URL}/api/v1/file/${item.id}`, {
+            headers: {
+              "Content-type": "application/json",
+              "Authorization": `Bearer ${localStorage.getItem("token")}`
+            }
+          });
+        }
+        setItems(prevItems => prevItems.filter(file => file.id !== item.id));
+        toaster("delete", item.id, false);
+      } catch (e) {
+        toaster("delete", item.id, true);
+      }
+    }
+  }
+
+  const pasteFileOrFolder = async (item: any) => {
+    const date = new Date();
+    const unixTimestampInSeconds = Math.floor(date.getTime() / 1000);
+    const uniqueName = createUniqueName(item.name);
+    const payload = {
+        name: uniqueName,
+        parentFolderId: parentFolderId ?? null,
+        size: item.size,
+        type: item.type,
+        modifiedAt: unixTimestampInSeconds,
+    };
+
+    try {
+        if (item.type === "folder") {
+            const res = await axios.post(`${BASE_URL}/api/v1/folder`, {
+                name: uniqueName,
+                parentFolderId: payload.parentFolderId,
+                parentFolderName: "personal_workspace"
+            }, {
+                headers: {
+                    "Content-type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`
+                }
+            });
+
+            setItems(prevItems => [
+                ...prevItems,
+                { id: res.data.id, name: uniqueName, items: "0", type: "folder", modifiedAt: date.toISOString(), isFavorite: false }
+            ]);
+        } else {
+            const res = await axios.post(`${BASE_URL}/api/v1/file`, payload, {
+                headers: {
+                    "Content-type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`
+                }
+            });
+
+            setItems(prevItems => [
+              ...prevItems,
+                { id: res.data.id, name: uniqueName, size: item.size, type: item.type, modifiedAt: date.toISOString(), isFavorite: false }
+            ]);
+        }
+        toaster("paste", item.id, false);
+    } catch (e) {
+        toaster("paste", item.id, true);
+    }
+  };
+
+  const pasteItems = async () => {
+    if (!copiedItems || copiedItems.length === 0) return;
+    // Process each copied folder or file
+    for (const item of copiedItems) {
+        await pasteFileOrFolder(item);
+    }
+    setSelectedItems && setSelectedItems([]);
+  };
+
+  const copySelectedItems = () => {
+    const itemsToCopy = items.filter((item) => selectedItems?.includes(item.id))
+    setCopiedItems && setCopiedItems(itemsToCopy)
+    // console.log(copiedItems);
+    toaster('copie','',false);
+  }
+
+
+    return (
     <div>
       <div className="w-full">
-        <div className="mb-4 flex justify-end space-x-2">
-          {copySelectedItems && (
-            <Button onClick={copySelectedItems} disabled={selectedItems.length === 0}>
-              <Copy className="mr-2 h-4 w-4" />
+        <div className="flex justify-end space-x-2 items-center py-2 bg-white text-black">
+          {copySelectedItems && selectedItems && (
+            <Button onClick={copySelectedItems} disabled={selectedItems.length === 0} className="bg-white text-black hover:bg-gray-300">
+              <Copy className="h-4 w-4" />
               Copy
             </Button>
           )}
           {pasteItems && (
-            <Button onClick={pasteItems} disabled={!clipboardRef.current}>
-              <Clipboard className="mr-2 h-4 w-4" />
+            <Button onClick={pasteItems} disabled={copiedItems.length === 0} className="bg-white text-black hover:bg-gray-300">
+              <Clipboard className=" h-4 w-4" />
               Paste
+            </Button>
+          )}
+          {deleteItems && selectedItems && (
+            <Button onClick={deleteItems} disabled={selectedItems.length === 0} className="bg-white text-black hover:bg-gray-300">
+              <Trash className=" h-4 w-4" />
+              Delete
             </Button>
           )}
         </div>
@@ -125,7 +280,7 @@ export default function FileManager({
           <Table>
             <TableHeader className="bg-gray-100">
               <TableRow>
-                {hasSelect && (
+                {selectedItems && toggleAll && (
                   <TableCell className="w-12">
                     <Checkbox
                       checked={selectedItems.length === items.length}
@@ -148,48 +303,49 @@ export default function FileManager({
                     </TableHead>
                   );
                 })}
-                {toggleFavorite && <TableHead className="w-12"></TableHead>}
+                {hasFavorite && <TableHead className="w-12"></TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
-                {items.map((item) => (
+                { items.map((item) => (
                   <SortableItem key={item.id} id={item.id}>
-                    {hasSelect && (
+                    {selectedItems && toggleItem && (
                       <TableCell>
                         <Checkbox
-                          checked={selectedItemsSet.has(item.id)}
+                          onPointerDown={(e) => e.stopPropagation()}
+                          checked={selectedItems.includes(item.id)}
                           onCheckedChange={(checked) => toggleItem(item.id, checked as boolean)}
                         />
                       </TableCell>
                     )}
                     {Object.entries(item)
-                      .filter(([key]) => key !== "id" && key !== "type")
+                      .filter(([key]) => key !== "id" && key !== "type" && key !== "isFavorite")
                       .map(([key, value], index) => (
                         <TableCell key={key} className="items-center gap-2">
                           <div className="flex items-center gap-2">
                             {index === 0 && iconOne && <div className="flex gap-2">{iconOne(item)}</div>}
                             {index === 1 && iconTwo && <div>{iconTwo(item)}</div>}
-                            {item[key]}
+                            <span>{item[key]}</span>
                           </div>
                         </TableCell>
                       ))}
-                    {toggleFavorite && (
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => toggleFavorite(item.id)}
-                        >
-                          <Star
-                            className={`h-4 w-4 ${
-                              item.isFavorite ? "fill-yellow-400 text-yellow-400" : ""
-                            }`}
-                          />
-                        </Button>
-                      </TableCell>
-                    )}
+                    <TableCell>
+                      <div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) =>{ 
+                          toggleFavoriteItem(item.id)
+                        }}
+                        aria-label={item.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                      >
+                        <Star className={item.isFavorite ? "fill-yellow-400" : "fill-none"} />
+                      </Button>
+                      </div>
+                    </TableCell>
+                    
                   </SortableItem>
                 ))}
               </SortableContext>

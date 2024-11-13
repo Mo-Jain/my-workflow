@@ -27,7 +27,8 @@ fileRouter.post("/", middleware, async (req, res) => {
 
         let name = parsedData.data.name;
         let message = "File created successfully";
-
+        const createdDate = parsedData.data.modifiedAt ? new Date(parsedData.data.modifiedAt) : new Date();
+        
         const file = await client.file.create({
             data: {
                 name: name,
@@ -36,7 +37,7 @@ fileRouter.post("/", middleware, async (req, res) => {
                 path: parentFolder?.path + "/" + parentFolder?.name,
                 size: parsedData.data.size,
                 type: parsedData.data.type,
-                createdAt: parsedData.data.modifiedAt ?? new Date()
+                createdAt: createdDate
             }
         })
 

@@ -1,7 +1,7 @@
 import { ArrowLeft, ChevronDown, Clock, FileText, Folder, Search, Star, Timer, TimerIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/router"
-import {  useEffect, useState } from "react"
+import {  useCallback, useEffect, useState } from "react"
 import FileManager from "@/components/FileManger"
 import {getFileIcon} from "./icon/icon"
 
@@ -44,6 +44,8 @@ interface Item {
 export default function RecentlyAccessed() {
   const [items, setItems] = useState<Item[]>(itemsList.sort((a,b)=>new Date(b.lastAccessed).getTime()-new Date(a.lastAccessed).getTime()));
   const router = useRouter();
+  const [selectedFiles, setSelectedFiles] = useState<number[]>([])
+
   useEffect(() => {
     setItems(itemsList);
   }, [itemsList]);
@@ -62,6 +64,19 @@ export default function RecentlyAccessed() {
       itemsList[itemIndex].isFavorite = !itemsList[itemIndex].isFavorite;
     }
   };
+
+  const toggleAll = (checked: boolean) => {
+    setSelectedFiles(checked ? items.map(file => file.id) : [])
+  }
+
+
+  const toggleItem = useCallback((itemId: number, checked: boolean) => {
+    setSelectedFiles(current => {
+      return checked
+        ? [...current, itemId]
+        : current.filter((id) => id !== itemId);
+    });
+  }, []);
 
   return (
     <div className="min-h-screen"
@@ -83,11 +98,17 @@ export default function RecentlyAccessed() {
       </div>
       <FileManager
         headers={["Name","Location","LastAccessed","Size","Created"]}
-        items={items.map(({  isFavorite, ...rest }) => rest)}
+        items={items}
+        setItems={setItems}
         toggleFavorite={toggleFavorite}
         hasSelect={true}
         iconOne={(file) =>getFileIcon(file.type)}
+        toggleAll={toggleAll}
+        toggleItem={toggleItem}
+        selectedItems={selectedFiles}
        />
+
+      
        <div className="mt-4 text-sm text-muted-foreground">
           <p>To personalize the Favorites list, you can push your favorite group to the top.</p>
           <p>You can also re-order items within the groups, so that your most favorite items appear at the top of the Favorites list.</p>

@@ -10,14 +10,14 @@ import {getFileIcon} from "./icon/icon"
 // This is sample data - in a real app this would come from your backend
 const itemsList = [
   {
-    id: 1,
+    id: "1",
     name: "User Guides",
     type: "folder",
     location: "Enterprise",
     isFavorite: true
   },
   {
-    id: 2,
+    id: "2",
     name: "ANR-PROD-ECM-UG-ECM.pdf",
     type: "pdf",
     location: "User Guides",
@@ -26,7 +26,7 @@ const itemsList = [
 ]
 
 interface Item {
-  id: number;
+  id: string;
   name: string;
   type: string;
   location: string;
@@ -34,14 +34,14 @@ interface Item {
 }
 
 export default function Favorites() {
-  const [selectedItems, setSelectedItems] = useState<number[]>([]);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [items, setItems] = useState<Item[]>(itemsList);
 
   const toggleAll = (checked: boolean) => {
     setSelectedItems(checked ? items.map(item => item.id) : [])
   }
 
-  const toggleItem = (itemId: number) => {
+  const toggleItem = (itemId: string) => {
     setSelectedItems(current =>
       current.includes(itemId)
         ? current.filter(id => id !== itemId)
@@ -50,7 +50,7 @@ export default function Favorites() {
   }
 
   //write code to toggle favorite as well as update the original itemList array
-  const toggleFavorite = (itemId: number) => {
+  const toggleFavorite = (itemId: string) => {
     console.log(itemId);
     setItems(prevItems => {
       console.log(prevItems);
@@ -109,10 +109,13 @@ export default function Favorites() {
       <div>
         <FileManager
           headers={["Name","Location"]}
-          items={items.map(({ isFavorite, ...rest }) => rest)}
-          toggleFavorite={toggleFavorite}
-          hasSelect={true}
+          items={items}
+          setItems={setItems}
+          hasFavorite={true}
           iconOne={(file) =>getFileIcon(file.type)}
+          toggleAll={toggleAll}
+          toggleItem={toggleItem}
+          selectedItems={selectedItems}
         />
 
         <div className="mt-4 text-sm text-muted-foreground">

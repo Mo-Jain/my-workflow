@@ -5,4 +5,6 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
 };
 
+export const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3001";
+
 export default nextConfig;

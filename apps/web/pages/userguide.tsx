@@ -18,7 +18,7 @@ import GridLayout from "@/components/Gridlayout"
 // Sample data - in a real app this would come from your backend
 const filesList = [
   {
-    id: 1,
+    id: "1",
     name: "ANR-PROD-ECM-UG-ECM.pdf",
     type: "pdf",
     size: "4 MB",
@@ -26,7 +26,7 @@ const filesList = [
     isFavorite: true
   },
   {
-    id: 2,
+    id: "2",
     name: "ANR-PROD-ECM-UG-NFA & Letters Workflow Manual.pdf",
     type: "pdf",
     size: "8 MB",
@@ -34,7 +34,7 @@ const filesList = [
     isFavorite: false
   },
   {
-    id: 3,
+    id: "3",
     name: "ANR-PROD-UG-CS Mobile.pdf",
     type: "pdf",
     size: "578 KB",
@@ -42,7 +42,7 @@ const filesList = [
     isFavorite: false
   },
   {
-    id: 4,
+    id: "4",
     name: "Raise Incident Guide.docx",
     type: "docx",
     size: "64 KB",
@@ -50,7 +50,7 @@ const filesList = [
     isFavorite: true
   },
   {
-    id: 5,
+    id: "5",
     name: "XENG Engineering-20220613_191213-Meeting Recording.mp4",
     type: "video",
     size: "205 MB",
@@ -59,7 +59,7 @@ const filesList = [
   }
 ]
 interface File {
-  id: number,
+  id: string,
   name: string,
   type: string,
   items?: string,
@@ -68,7 +68,7 @@ interface File {
   isFavorite: boolean
 }
 export default function UserGuides() {
-  const [selectedFiles, setSelectedFiles] = React.useState<number[]>([])
+  const [selectedFiles, setSelectedFiles] = React.useState<string[]>([])
   const [sortConfig, setSortConfig] = React.useState<{
     key: 'name' | 'size' | 'modified',
     direction: 'asc' | 'desc'
@@ -81,7 +81,7 @@ export default function UserGuides() {
     setSelectedFiles(checked ? files.map(file => file.id) : [])
   }
 
-  const toggleFile = (fileId: number) => {
+  const toggleFile = (fileId: string) => {
     setSelectedFiles(current =>
       current.includes(fileId)
         ? current.filter(id => id !== fileId)
@@ -89,18 +89,13 @@ export default function UserGuides() {
     )
   }
 
-  const toggleFavorite = (fileId: number) => {
+  const toggleFavorite = (fileId: string) => {
     setFiles(prevFiles =>
       prevFiles.map(file =>
         file.id === fileId ? { ...file, isFavorite: !file.isFavorite } : file
       )
     );
   
-    // Update the original itemsList array
-    const fileIndex = filesList.findIndex(file => file.id === fileId);
-    if (fileIndex > -1) {
-      filesList[fileIndex].isFavorite = !filesList[fileIndex].isFavorite;
-    }
   };
 
 
@@ -153,15 +148,19 @@ export default function UserGuides() {
           <>
             <FileManager
               headers={["Name","Size","Modified"]}
-              items={files.map(({ isFavorite, ...rest }) => rest)}
-              toggleFavorite={toggleFavorite}
-              hasSelect={true}
+              items={files}
+              setItems={setFiles}
+              hasFavorite={true}
               iconOne={(file) =>getFileIcon(file.type)}
+              toggleAll={toggleAll}
+              toggleItem={toggleFile}
+              selectedItems={selectedFiles}
               />
           </>
         ) : (
           <GridLayout 
             items={files}
+            setItems={setFiles}
             selectedItems = {selectedFiles}
             toggleItem = {toggleFile}
             toggleAll = {toggleAll}

@@ -1,14 +1,16 @@
 import MyWorkflow from "@/components/MyWorkflow"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { favoriteItems } from "@/lib/store/selectors/favorites"
 import { FileText, Folder, Clock, Star, Workflow, CheckCircle2 } from "lucide-react"
 import { useRouter } from 'next/router'
 import { useState } from "react"
+import { useRecoilValue } from "recoil"
 
 
 export default function Home() {
   const [workflowVisible, setWorkflowVisible] = useState(false);
-  
+  const favorites = useRecoilValue(favoriteItems);
   const router = useRouter();
 
   return (
@@ -108,10 +110,27 @@ export default function Home() {
                 <Star className="h-5 w-5 text-yellow-500" />
                   <CardTitle className="text-sm font-medium">Favorites</CardTitle>
               </CardHeader>
-            <CardContent className="h-[calc(100%-4rem)] flex flex-col items-center justify-center text-muted-foreground">
-              <FileText className="h-12 w-12 text-gray-200 mb-2" />
-              There are no items to display.
-            </CardContent>
+              {favorites.length > 0 ? 
+              <CardContent className="h-[calc(100%-4rem)] flex flex-col items-center justify-center text-muted-foreground">
+                <FileText className="h-12 w-12 text-gray-200 mb-2" />
+                {favorites.map((item:any)=>(
+                    <div className="flex items-center gap-2">
+                      {
+                        item.type === "folder" ? 
+                        <Folder className="h-4 w-4 text-gray-400" />
+                        :
+                        <FileText className="h-4 w-4 text-gray-400" />
+                      }
+                      <span className="text-sm">{item.name}</span>
+                    </div>
+                ))}
+              </CardContent>
+              :
+              <CardContent className="h-[calc(100%-4rem)] flex flex-col items-center justify-center text-muted-foreground">
+                <FileText className="h-12 w-12 text-gray-200 mb-2" />
+                There are no items to display.
+              </CardContent>
+              }
           </Card>
           
           <Card className="row-span-2 rounded-none">

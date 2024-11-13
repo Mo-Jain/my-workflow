@@ -1,4 +1,4 @@
-import * as React from "react"
+import {useEffect, useState} from "react"
 import { Badge, ChevronDown, Folder, LayoutGrid, LayoutList, Search, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -15,55 +15,14 @@ import { Card, CardContent } from "@/components/ui/card"
 import FileManager from "@/components/FileManger"
 import { getFileIcon, getFileThumbnail } from "./icon/icon"
 import GridLayout from "@/components/Gridlayout"
+import Header from "@/components/Header"
+import axios from "axios"
+import { BASE_URL } from "@/next.config"
+import FoldersTable from "@/components/FolderTable"
 
-// Sample data - in a real app this would come from your backend
-const foldersList = [
-  {
-    id: 1,
-    name: "ATMSL RAILWAYS",
-    items: "14 items",
-    modified: "10/24/2024 2:44 PM",
-    isFavorite: false 
-  },
-  {
-    id: 2,
-    name: "Bijahan",
-    items: "13 items",
-    modified: "07/01/2022 1:16 PM",
-    isFavorite: true
-  },
-  {
-    id: 3,
-    name: "Business Analytics",
-    items: "2 items",
-    modified: "07/01/2022 1:59 PM",
-    isFavorite: false
-  },
-  {
-    id: 4,
-    name: "Business Development",
-    items: "37 items",
-    modified: "07/16/2024 4:34 PM",
-    isFavorite: true
-  },
-  {
-    id: 5,
-    name: "Cement",
-    items: "2 items",
-    modified: "09/12/2022 11:58 AM",
-    isFavorite: false
-  },
-  {
-    id: 6,
-    name: "Compliances & Sustainability",
-    items: "0 items",
-    modified: "07/01/2022 4:15 PM",
-    isFavorite: false
-  }
-]
 
 interface Folder {
-  id: number,
+  id: string,
   name: string,
   items: string,
   modified: string,
@@ -71,16 +30,18 @@ interface Folder {
 }
 
 export default function Enterprise() {
-  const [selectedFolders, setSelectedFolders] = React.useState<number[]>([])
-  const [viewType, setViewType] = React.useState<'list' | 'grid'>('list');
-  const [folders, setFolders] = React.useState<Folder[]>(foldersList);
+  const [selectedFolders, setSelectedFolders] = useState<string[]>([])
+  const [viewType, setViewType] = useState<'list' | 'grid'>('list');
+  const [folders, setFolders] = useState<Folder[]>([]);
+  const [newFolderName, setNewFolderName] = useState('new folder');
+  const [workspaceId,setWorkspaceId] = useState("")
 
 
   const toggleAll = (checked: boolean) => {
     setSelectedFolders(checked ? folders.map(folder => folder.id) : [])
   }
 
-  const toggleFolder = (folderId: number) => {
+  const toggleFolder = (folderId: string) => {
     setSelectedFolders(current =>
       current.includes(folderId)
         ? current.filter(id => id !== folderId)
@@ -89,19 +50,34 @@ export default function Enterprise() {
   }
   
 
-  const toggleFavorite = (folderId: number) => {
-    setFolders(prevFolders =>
-      prevFolders.map(folder =>
+  const toggleFavorite = (folderId: string) => {
+    setFolders(folders.map(folder =>
         folder.id === folderId ? { ...folder, isFavorite: !folder.isFavorite } : folder
       )
     );
-  
-    // Update the original itemsList array
-    const folderIndex = foldersList.findIndex(file => file.id === folderId);
-    if (folderIndex > -1) {
-      foldersList[folderIndex].isFavorite = !foldersList[folderIndex].isFavorite;
-    }
   };
+
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await axios.get(`${BASE_URL}/api/v1/enterprise`,{
+          headers:{
+            authorization : `Bearer `+ localStorage.getItem('token')
+          }
+        })
+        const enterpriseFolder = res.data.enterpriseFolder;
+        setFolders(enterpriseFolder);
+        setWorkspaceId(res.data.EnterperiseId);
+      }
+      catch (error) {
+        console.log(error);
+      }
+    }
+    fetchData();
+}, []);
+
+
 
   return (
     <div className="min-h-screen "
@@ -126,26 +102,37 @@ export default function Enterprise() {
           </div>
         </div>
       </div>
-
+      <Header
+        newFolderName={newFolderName}
+        setNewFolderName={setNewFolderName}
+        items={folders}
+        setItems={setFolders}
+        parentFolderId={workspaceId}
+      />
       <div>
         {viewType === 'list' ? (
             <>
               <FileManager
                 headers={["Name","Size","Modified"]}
-                items={folders.map(({  isFavorite, ...rest }) => rest)}
-                toggleFavorite={toggleFavorite}
-                hasSelect={true}
+                items={folders}
+                setItems={setFolders}
+                hasFavorite={true}
                 iconOne={(file) =>getFileIcon(file.type)}
+                toggleAll={toggleAll}
+                toggleItem={toggleFolder}
+                selectedItems={selectedFolders}
               />
             </>
         ) : (
           <GridLayout 
             items={folders.map((folder)=>({...folder,type:"folder"}))}
+            setItems={setFolders}
             selectedItems = {selectedFolders}
             toggleItem = {toggleFolder}
             toggleAll = {toggleAll}
             />
         )}
+
 
         <div className="flex items-center justify-between mt-4 p-2">
           <div className="text-sm text-muted-foreground">

@@ -12,8 +12,8 @@ const GridLayout = ({ items, setItems, selectedItems, toggleItem, toggleAll }:
     { 
         items: any[]; // Define items more specifically if possible
         setItems: React.Dispatch<React.SetStateAction<any[]>>; // Update the type here 
-        selectedItems: number[], 
-        toggleItem: (id: number, checked: boolean) => void,
+        selectedItems: string[], 
+        toggleItem: (id: string, checked: boolean) => void,
         toggleAll: (checked:boolean) => void 
     }
 ) => {

@@ -10,25 +10,23 @@ generator client {
 }
 
 model User {
-  id               String           @id @default(uuid())
-  usermail         String           @unique
-  name             String
-  password         String           
-  files            File[]           // One-to-many relation with files
-  folders          Folder[]         // One-to-many relation with folders
-  favorites        Favorite[]       // One-to-many relation with favorites
-  recentlyViewed   RecentlyViewed[] // One-to-many relation with recently viewed items
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  assignments      Assignment[]
-  workflows        Workflows[]
+  id                    String           @id @default(uuid())
+  usermail              String           @unique
+  name                  String
+  password              String           
+  files                 File[]           // One-to-many relation with files
+  folders               Folder[]         // One-to-many relation with folders
+  recentlyViewed        RecentlyViewed[] // One-to-many relation with recently viewed items
+  assignments           Assignment[]
+  workflows             Workflows[]
+  personalWorkspaceId   String?
 }
 
 model Folder {
   id               String           @id @default(uuid())
   name             String
-  user             User             @relation(fields: [creatorId], references: [id])
-  creatorId        String
+  user             User?             @relation(fields: [creatorId], references: [id])
+  creatorId        String?
   parentFolder     Folder?          @relation("Subfolders", fields: [parentFolderId], references: [id])
   parentFolderId   String?
   isFavorite       Boolean          @default(false)
@@ -37,7 +35,6 @@ model Folder {
   files            File[]           // One-to-many relation with files
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
-  Favorite         Favorite[]
 
   @@unique([ parentFolderId, name])
 }
@@ -56,23 +53,10 @@ model File {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   RecentlyViewed   RecentlyViewed[]
-  Favorite         Favorite[]
 
   @@unique([ parentFolderId, name])
 }
 
-model Favorite {
-  id               Int              @id @default(autoincrement())
-  user             User             @relation(fields: [userId], references: [id])
-  userId           String
-  file             File?            @relation(fields: [fileId], references: [id])
-  fileId           String?
-  folder           Folder?          @relation(fields: [folderId], references: [id])
-  folderId         String?
-  createdAt        DateTime         @default(now())
-
-  @@unique([userId, fileId, folderId]) // Ensures unique favorite entries
-}
 
 model RecentlyViewed {
   id               Int              @id @default(autoincrement())
@@ -93,7 +77,7 @@ model Assignment {
   priority         String           @default("medium")
   status           String           @default("ok")
   userId           String
-  User             User             @relation(fields: [userId], references: [id])
+  user             User             @relation(fields: [userId], references: [id])
 }
 
 model Workflows {
@@ -105,7 +89,7 @@ model Workflows {
   currentStep      String
   assignedTo       String
   startDate        DateTime         @default(now())
-  User             User             @relation(fields: [userId], references: [id])
+  user             User             @relation(fields: [userId], references: [id])
 }
 
 
