@@ -28,6 +28,7 @@ import { SortableItem } from "./Sortable";
 import axios from "axios";
 import { BASE_URL } from "@/next.config";
 import { toaster } from "@/pages/admin";
+import { useRouter } from "next/router";
 
 interface FileManagerProps {
   headers: string[];
@@ -59,14 +60,14 @@ export default function FileManager({
   toggleItem,
   selectedItems,
   setSelectedItems,
-}: FileManagerProps) {
+  }: FileManagerProps) {
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "asc" | "desc";
   }>({ key: "name", direction: "asc" });
    // Memoize the items mapped to their IDs
-  const selectedItemsSet = useMemo(() => new Set(selectedItems), [selectedItems]);
-  const sensors = useSensors(
+  const router = useRouter();
+   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
@@ -94,6 +95,7 @@ export default function FileManager({
     setItems(sortedItems);
     setSortConfig({ key, direction });
   };
+  
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
@@ -252,6 +254,12 @@ export default function FileManager({
     toaster('copie','',false);
   }
 
+  const handleDoubleClick = (id:string,type:string) => {
+    if(type === "folder"){
+      router.push(`/node/${id}`)
+    }
+  }
+
 
     return (
     <div>
@@ -307,9 +315,10 @@ export default function FileManager({
               </TableRow>
             </TableHeader>
             <TableBody>
-              <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
+              <SortableContext items={items.map((item) => item.id)} 
+              strategy={verticalListSortingStrategy}>
                 { items.map((item) => (
-                  <SortableItem key={item.id} id={item.id}>
+                  <SortableItem key={item.id} id={item.id} onDoubleClick={() => handleDoubleClick(item.id,item.type)}>
                     {selectedItems && toggleItem && (
                       <TableCell>
                         <Checkbox
@@ -345,7 +354,6 @@ export default function FileManager({
                       </Button>
                       </div>
                     </TableCell>
-                    
                   </SortableItem>
                 ))}
               </SortableContext>

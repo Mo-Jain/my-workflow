@@ -53,6 +53,7 @@ folderRouter.get("/:folderId", middleware, async (req, res) => {
             id: req.params.folderId
         },
         include: {
+            files:true,
             subfolders: {
                 include: {
                     subfolders: true,
@@ -66,8 +67,10 @@ folderRouter.get("/:folderId", middleware, async (req, res) => {
         return;
     }
     const folderData = folder.subfolders.map((folder:any) => formatItem(folder, true));
+    const fileData = folder.files.map((file:any) => formatItem(file, false));
     res.json({
-        folderData
+        folderData,
+        fileData
     })
 })
 
