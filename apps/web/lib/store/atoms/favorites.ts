@@ -1,7 +1,7 @@
 import { atom } from "recoil";
 
 export interface Favorites {
-    id: number;
+    id: string;
     name: string;
     type: string;
     location: string;

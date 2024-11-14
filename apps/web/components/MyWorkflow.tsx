@@ -16,7 +16,7 @@ import { useRouter } from "next/navigation"
 // Sample data - in a real app this would come from your backend
 const workflowsList = [
   {
-    id: 1,
+    id: "1",
     status: "on time",
     durDate: "",
     type: "dot",
@@ -26,7 +26,7 @@ const workflowsList = [
     startdate: "September 10, 2024"
   },
   {
-    id: 2,
+    id: "2",
     status: "on time",
     durDate: "",
     type: "dot",
@@ -39,7 +39,7 @@ const workflowsList = [
 
 
 interface Workflow {
-  id: number;
+  id: string;
   status: string;
   durDate: string;
   type: string
@@ -74,7 +74,6 @@ export default function Component(
           items={workflows}
           setItems={setWorkflows}
           hasFavorite={false}
-          iconOne={(workflow) =>getFileIcon(workflow.type)}
         />
       </div>
     </div>

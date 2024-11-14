@@ -1,16 +1,18 @@
 import { favoritesState } from "@/lib/store/atoms/favorites";
 import { recentlyViewedState } from "@/lib/store/atoms/recentlyViewed";
 import { userState } from "@/lib/store/atoms/user";
+import { favoriteIsLoading, favoriteItems } from "@/lib/store/selectors/favoritesSelectors";
 import axios from "axios";
 import React, { useEffect } from "react"
-import { useSetRecoilState } from "recoil";
+import { useRecoilValue, useSetRecoilState } from "recoil";
 
 const BASE_URL = 'http://localhost:3001'
 
 const InitUser = () => {
     const setUser  = useSetRecoilState(userState);
-    const setFavorites  = useSetRecoilState(favoritesState);
+    const setFavorite = useSetRecoilState(favoritesState);
     const setRecentlyViewed  = useSetRecoilState(recentlyViewedState);
+    const favorites = useRecoilValue(favoritesState);
 
     useEffect(() => {
 
@@ -53,28 +55,24 @@ const InitUser = () => {
                 })
                 const favoriteFolders = favRes.data.favoriteFolders.map((folder: any) =>({...folder,type:'folder'}));
                 const favoriteFiles = favRes.data.favoriteFiles.map((file: any) =>({...file,type:'file'}));;
-                if(favoriteFolders){
-                    setFavorites({
-                        isLoading:false,
-                        favorites:favoriteFolders
-                    })
-                }
-                if(favoriteFiles){
-                    setFavorites({
-                        isLoading:false,
-                        favorites:favoriteFiles
-                    })
-                }
+                console.log("favoriteFolders :",favoriteFolders);
+                console.log("favoriteFiles :",favoriteFiles);
+
+                setFavorite(prevFavorites => ({
+                    ...prevFavorites,
+                    favorites: [...favoriteFolders,...favoriteFiles ]
+                }));
+                
 
                 if(!favRes.data.favoriteFolders && !favRes.data.favoriteFiles){
-                    setFavorites({
+                    setFavorite({
                         isLoading:false,
                         favorites:[]
                     })
                 }
             }
             catch(err){
-                setFavorites({
+                setFavorite({
                     isLoading:false,
                     favorites:[]
                 })

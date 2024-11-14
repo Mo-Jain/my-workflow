@@ -138,6 +138,7 @@ router.post("/signin", async (req, res) => {
 
         const token = jwt.sign({
             userId: user.id,
+            name: user.name,
         }, JWT_PASSWORD);
 
         res.json({
@@ -243,6 +244,45 @@ router.get('/me',middleware, async (req, res) => {
     catch(err){
         res.json({
             message: "Internal server error"
+        })
+    }
+})
+
+router.get("/userGuide",middleware, async (req, res) => {
+    try {
+        const userGuide = await client.folder.findFirst({
+            where:{
+                parentFolderId:"d810a99b-183e-4e96-8a1e-264d612dcafb",
+                name:"user_guide"
+            },
+            include: {
+                files:true,
+                subfolders: {
+                    include: {
+                        subfolders: true,
+                        files: true
+                    }
+                }
+            }
+        })
+
+        if(!userGuide){
+            res.status(404).json({
+                message: "User Guide not found"
+            })
+            return
+        }
+
+        const folderData = userGuide.subfolders.map((folder:any) => formatItem(folder, true));
+        const fileData = userGuide.files.map((file:any) => formatItem(file, false));
+        res.json({
+            folderData,
+            fileData
+        })
+    }
+    catch(err){
+        res.json({
+            message: "User Guide not found"
         })
     }
 })

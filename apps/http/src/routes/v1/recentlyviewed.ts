@@ -92,6 +92,9 @@ recentlyViewedRouter.post("/", middleware, async (req, res) => {
                     fileId: parsedData.data.fileId,
                     userId: req.userId!,
                     lastViewedAt: new Date()
+                },
+                include:{
+                    file:true
                 }
             })
         }

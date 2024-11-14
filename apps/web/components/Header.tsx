@@ -54,7 +54,6 @@ const Header = ({
           const payload = {
                 name: uniqueFolderName,
                 parentFolderId: parentFolderId,
-                parentFolderName: "personal_workspace"
             }
           const res = await axios.post(`${BASE_URL}/api/v1/folder`, payload, {
               headers: {
@@ -71,6 +70,7 @@ const Header = ({
               isFavorite: false
             }
             setItems([...items, newFolder])
+            console.log("items :",items);
   
             setTimeout(() => {
               toast({
@@ -105,7 +105,7 @@ const Header = ({
       // Extract file name and extension (if it exists)
       const extensionIndex = uniqueFileName.lastIndexOf('.');
       const baseName = extensionIndex !== -1 ? uniqueFileName.slice(0, extensionIndex) : uniqueFileName;
-      const extension = extensionIndex !== -1 ? uniqueFileName.slice(extensionIndex) : '';
+      const extension = extensionIndex !== -1 ? uniqueFileName.slice(extensionIndex).toLocaleLowerCase() : '';
   
       // Check if the file name exists and keep updating until a unique name is found
       while (items.some(item => item.name === uniqueFileName)) {
@@ -113,48 +113,49 @@ const Header = ({
           counter++;
       }
   
-        try {
-          const size = parseInt((file.size / 1024).toFixed(2));
-          const payload = {
-              name: uniqueFileName,
-              parentFolderId: parentFolderId,
-              size: (size>1024) ? `${(size/1024).toFixed(0)} MB` : `${size.toFixed(2)} KB`,
-              type: file.type.split('/')[1] || 'file',
-              modifiedAt: file.lastModified
-            }
-          const res = await axios.post(`${BASE_URL}/api/v1/file`, payload, {
-              headers: {
-                  "Content-type": "application/json",
-                  "Authorization": `Bearer ${localStorage.getItem("token")}`
-              }
-          });
-          const newFile = {
-            id: res.data.id,
+      try {
+        const size = parseInt((file.size / 1024).toFixed(2));
+        const payload = {
             name: uniqueFileName,
+            parentFolderId: parentFolderId,
             size: (size>1024) ? `${(size/1024).toFixed(0)} MB` : `${size.toFixed(2)} KB`,
-            type: file.type.split('/')[1] || 'file',
-            modifiedAt: new Date(file.lastModified).toISOString(),
-            isFavorite: false
-          }
-          setItems([...items, newFile])
-          setTimeout(() => {
-            toast({
-              title: `Item created`,
-              description: `Successfully created ${res.data.id}`,
-              className: "text-black bg-white border-0 rounded-md shadow-mg shadow-black/5 font-normal"
-            })
-          },1000)
+            type: extension.slice(1) || 'file',
+            modifiedAt: file.lastModified
+          }          
+        const res = await axios.post(`${BASE_URL}/api/v1/file`, payload, {
+            headers: {
+                "Content-type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem("token")}`
+            }
+        });
+        const newFile = {
+          id: res.data.id,
+          name:payload.name,
+          size:payload.size,
+          type:payload.type,
+          modifiedAt:payload.modifiedAt,
+          isFavorite: false
         }
-        catch (error) {
-          setTimeout(() => {
-            toast({
-              title: "Error",
-              description: `Could not create item `,
-              className: "text-black bg-white border-0 rounded-md shadow-mg shadow-black/5 font-normal",
-              variant: "destructive",
-            })
-          }, 1000)
-        }
+        console.log(newFile);
+        setItems([...items, newFile])
+        setTimeout(() => {
+          toast({
+            title: `Item created`,
+            description: `Successfully created ${res.data.id}`,
+            className: "text-black bg-white border-0 rounded-md shadow-mg shadow-black/5 font-normal"
+          })
+        },1000)
+      }
+      catch (error) {
+        setTimeout(() => {
+          toast({
+            title: "Error",
+            description: `Could not create item `,
+            className: "text-black bg-white border-0 rounded-md shadow-mg shadow-black/5 font-normal",
+            variant: "destructive",
+          })
+        }, 1000)
+      }
     }
     
 

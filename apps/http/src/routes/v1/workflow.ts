@@ -91,7 +91,7 @@ workflowRouter.put("/:id", middleware, async (req, res) => {
         
         await client.workflows.update({
             where: {
-                id: parseInt(req.params.id)
+                id: req.params.id
             },
             data: updatedData
         })

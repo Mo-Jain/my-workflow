@@ -4,12 +4,14 @@ import { useRouter } from "next/router"
 import {  useCallback, useEffect, useState } from "react"
 import FileManager from "@/components/FileManger"
 import {getFileIcon} from "./icon/icon"
+import { useRecoilValue } from "recoil"
+import { recentlyViewedItems } from "@/lib/store/selectors/recentlyViewedSelectors"
 
 
 // This is sample data - in a real app this would come from your backend
 const itemsList = [
   {
-    id: 1,
+    id: "1",
     name: "User Guides",
     type: "pdf",
     location: "Enterprise",
@@ -19,7 +21,7 @@ const itemsList = [
     created: "11/20/2023 2:43 PM"
   },
   {
-    id: 2,
+    id: "2",
     name: "ANR-PROD-ECM-UG-ECM.pdf",
     type: "pdf",
     location: "User Guides",
@@ -31,7 +33,7 @@ const itemsList = [
 ]
 
 interface Item {
-  id: number;
+  id: string;
   name: string;
   type: string;
   location: string;
@@ -42,35 +44,24 @@ interface Item {
 }
 
 export default function RecentlyAccessed() {
-  const [items, setItems] = useState<Item[]>(itemsList.sort((a,b)=>new Date(b.lastAccessed).getTime()-new Date(a.lastAccessed).getTime()));
+  const [items, setItems] = useState<Item[]>([]);
   const router = useRouter();
-  const [selectedFiles, setSelectedFiles] = useState<number[]>([])
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([])
+  const recentlyViewed = useRecoilValue(recentlyViewedItems);
 
   useEffect(() => {
-    setItems(itemsList);
-  }, [itemsList]);
+    setItems(recentlyViewed);
+  }, [recentlyViewed]);
 
   //write code to toggle favorite as well as update the original itemList array
-  const toggleFavorite = (itemId: number) => {
-    setItems(prevItems =>
-      prevItems.map(item =>
-        item.id === itemId ? { ...item, isFavorite: !item.isFavorite } : item
-      )
-    );
-  
-    // Update the original itemsList array
-    const itemIndex = itemsList.findIndex(item => item.id === itemId);
-    if (itemIndex > -1) {
-      itemsList[itemIndex].isFavorite = !itemsList[itemIndex].isFavorite;
-    }
-  };
+
 
   const toggleAll = (checked: boolean) => {
     setSelectedFiles(checked ? items.map(file => file.id) : [])
   }
 
 
-  const toggleItem = useCallback((itemId: number, checked: boolean) => {
+  const toggleItem = useCallback((itemId: string, checked: boolean) => {
     setSelectedFiles(current => {
       return checked
         ? [...current, itemId]
@@ -100,12 +91,11 @@ export default function RecentlyAccessed() {
         headers={["Name","Location","LastAccessed","Size","Created"]}
         items={items}
         setItems={setItems}
-        toggleFavorite={toggleFavorite}
-        hasSelect={true}
-        iconOne={(file) =>getFileIcon(file.type)}
         toggleAll={toggleAll}
         toggleItem={toggleItem}
         selectedItems={selectedFiles}
+        hasFavorite={true}
+        setSelectedItems={setSelectedFiles}
        />
 
       

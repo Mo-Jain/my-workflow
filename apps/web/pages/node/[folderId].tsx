@@ -4,35 +4,9 @@ import { useParams } from "next/navigation";
 import React, { useEffect } from "react"
 import { Badge, ChevronDown, FileText, Folder, LayoutGrid, LayoutList, Search, Star, Plus, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Card, CardContent } from "@/components/ui/card"
 import { useState, useRef, useCallback } from "react"
 import FileManager from "@/components/FileManger"
 import GridLayout from "@/components/Gridlayout"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { toast } from "@/hooks/use-toast"
 import { getFileIcon } from "../icon/icon";
 import Header from "@/components/Header";
@@ -62,13 +36,12 @@ const filesList = [
   }
 
 const folderId = () => {
-  const folderId: string = useParams()?.folderId;
   const [selectedFiles, setSelectedFiles] = useState<string[]>([])
   const [viewType, setViewType] = useState<'list' | 'grid'>('list')
   const [files, setFiles] = useState<File[]>([]);
   const [newFolderName, setNewFolderName] = useState('new folder')
   const [copiedFolders, setCopiedFolders] = useState<File[]>([])
-
+  const folderId  = useParams();
 
 
   const toggleAll = (checked: boolean) => {
@@ -76,22 +49,22 @@ const folderId = () => {
   }
 
   useEffect(() => {
+    if(!folderId?.folderId) return;
     async function fetchData() {
       try {
-        const res = await axios.get(`${BASE_URL}/api/v1/folder/${folderId}`,{
+        const res = await axios.get(`${BASE_URL}/api/v1/folder/${folderId.folderId}`,{
           headers:{
             authorization : `Bearer `+ localStorage.getItem('token')
           }
         })
-        
         setFiles([...res.data.folderData,...res.data.fileData]);
       }
       catch (error) {
         console.log(error);
       }
     }
-    fetchData();
-}, []);
+      fetchData();
+  }, [folderId]);
 
   const toggleFile = useCallback((itemId: string, checked: boolean) => {
     setSelectedFiles(current => {
@@ -130,19 +103,17 @@ const folderId = () => {
         setNewFolderName={setNewFolderName}
         items={files}
         setItems={setFiles}
-        parentFolderId={folderId}
+        parentFolderId={folderId?.folderId as string}
       />
 
       <div>
-      
         {viewType === 'list' ? (
           <FileManager
             headers={["Name","Size","Modified"]}
             items={files}
             setItems={setFiles}
             hasFavorite={true}
-            parentFolderId={folderId}
-            iconOne={(file) => getFileIcon(file.type)}
+            parentFolderId={folderId?.folderId as string}
             copiedItems={copiedFolders}
             setCopiedItems={setCopiedFolders}
             toggleItem={toggleFile}

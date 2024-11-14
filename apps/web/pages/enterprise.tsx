@@ -1,24 +1,12 @@
 import {useEffect, useState} from "react"
 import { Badge, ChevronDown, Folder, LayoutGrid, LayoutList, Search, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Card, CardContent } from "@/components/ui/card"
 import FileManager from "@/components/FileManger"
 import { getFileIcon, getFileThumbnail } from "./icon/icon"
 import GridLayout from "@/components/Gridlayout"
 import Header from "@/components/Header"
 import axios from "axios"
 import { BASE_URL } from "@/next.config"
-import FoldersTable from "@/components/FolderTable"
 
 
 interface Folder {
@@ -28,6 +16,51 @@ interface Folder {
   modified: string,
   isFavorite: boolean
 }
+
+const folderList = [
+  {
+    id: 1,
+    name: "ATMSL RAILWAYS",
+    items: "14 items",
+    modified: "10/24/2024 2:44 PM",
+    isFavorite: false
+  },
+  {
+    id: 2,
+    name: "Bijahan",
+    items: "13 items",
+    modified: "07/01/2022 1:16 PM",
+    isFavorite: true
+  },
+  {
+    id: 3,
+    name: "Business Analytics",
+    items: "2 items",
+    modified: "07/01/2022 1:59 PM",
+    isFavorite: false
+  },
+  {
+    id: 4,
+    name: "Business Development",
+    items: "37 items",
+    modified: "07/16/2024 4:34 PM",
+    isFavorite: true
+  },
+  {
+    id: 5,
+    name: "Cement",
+    items: "2 items",
+    modified: "09/12/2022 11:58 AM",
+    isFavorite: false
+  },
+  {
+    id: 6,
+    name: "Compliances & Sustainability",
+    items: "0 items",
+    modified: "07/01/2022 4:15 PM",
+    isFavorite: false
+  }
+]
 
 export default function Enterprise() {
   const [selectedFolders, setSelectedFolders] = useState<string[]>([])
@@ -49,15 +82,6 @@ export default function Enterprise() {
     )
   }
   
-
-  const toggleFavorite = (folderId: string) => {
-    setFolders(folders.map(folder =>
-        folder.id === folderId ? { ...folder, isFavorite: !folder.isFavorite } : folder
-      )
-    );
-  };
-
-
   useEffect(() => {
     async function fetchData() {
       try {
@@ -117,7 +141,6 @@ export default function Enterprise() {
                 items={folders}
                 setItems={setFolders}
                 hasFavorite={true}
-                iconOne={(file) =>getFileIcon(file.type)}
                 toggleAll={toggleAll}
                 toggleItem={toggleFolder}
                 selectedItems={selectedFolders}

@@ -1,15 +1,16 @@
 import { atom } from "recoil";
 
 interface Item {
-    id: string;
-    name: string;
-    type: string;
-    location: string;
-    isFavorite: boolean;
-    lastAccessed: string;
-    size: string;
-    created: string;
+    id: string,
+    status: string,
+    durDate: Date,
+    type: string,
+    workflow: string,
+    currentstep: string,
+    assignedto: string,
+    startdate: Date
   }
+  
 export const recentlyViewedState = atom<{isLoading:boolean,items: Item[] }>({
   key: "recentlyViewedState",
   default: {

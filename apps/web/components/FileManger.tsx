@@ -1,4 +1,4 @@
-import { Star, Copy, Clipboard, Trash } from "lucide-react";
+import { Star, Copy, Clipboard, Trash, Pen, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -29,15 +29,17 @@ import axios from "axios";
 import { BASE_URL } from "@/next.config";
 import { toaster } from "@/pages/admin";
 import { useRouter } from "next/router";
+import { getFileIcon } from "@/pages/icon/icon";
+import { favoritesState } from "@/lib/store/atoms/favorites";
+import { useSetRecoilState } from "recoil";
+import { Input } from "./ui/input";
 
 interface FileManagerProps {
   headers: string[];
   items: any[]; // Define items more specifically if possible
   setItems: React.Dispatch<React.SetStateAction<any[]>>; // Update the type here
   hasFavorite: boolean;
-  parentFolderId: string;
-  iconOne?: (item: any) => JSX.Element;
-  iconTwo?: (item: any) => JSX.Element;
+  parentFolderId?: string;
   copiedItems?: any;
   setCopiedItems?: React.Dispatch<React.SetStateAction<any>>;
   toggleAll?: (checked: boolean) => void;
@@ -52,8 +54,6 @@ export default function FileManager({
   setItems,
   hasFavorite,
   parentFolderId,
-  iconOne,
-  iconTwo,
   copiedItems,
   setCopiedItems,
   toggleAll,
@@ -67,7 +67,10 @@ export default function FileManager({
   }>({ key: "name", direction: "asc" });
    // Memoize the items mapped to their IDs
   const router = useRouter();
-   const sensors = useSensors(
+  const setFavorite = useSetRecoilState(favoritesState);
+  const [editingFolderId, setEditingFolderId] = useState<string | null>(null)
+  const [editingFolderName, setEditingFolderName] = useState('')
+  const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
@@ -111,39 +114,43 @@ export default function FileManager({
   
 
   const toggleFavoriteItem = async (itemId: string) => {
-    setItems(items.map(item => 
-      item.id === itemId ? { ...item, isFavorite: !item.isFavorite } : item
-    ))
-    try{
-      const type = items.find(item => item.id === itemId).type;
+    const item = items.find(item => item.id === itemId);
+    if (!item) return;
 
-      if(type === "folder"){
-        await axios.put(`${BASE_URL}/api/v1/folder/${itemId}`, {
-          name: items.find(item => item.id === itemId).name,
-          isFavorite: !items.find(item => item.id === itemId).isFavorite,
-        },{
-          headers:{
-            "Content-type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`
-          }
-        });
-        return;
-      }
-      await axios.put(`${BASE_URL}/api/v1/file/${itemId}`, {
-        name: items.find(item => item.id === itemId).name,
-        isFavorite: !items.find(item => item.id === itemId).isFavorite,
-      },{
-        headers:{
+    const { isFavorite, type, name, parentFolderName } = item;
+    const updatedFavoriteStatus = !isFavorite;
+    
+    // Optimistically update the item in state
+    setItems(items.map(i => i.id === itemId ? { ...i, isFavorite: updatedFavoriteStatus } : i));
+
+    // Helper to update favorite state
+    const updateFavoriteState = (isFavorite: boolean) => {
+      setFavorite(prevFavorites => ({
+        ...prevFavorites,
+        favorites: isFavorite
+          ? [...prevFavorites.favorites, { id: itemId, name, type, location: parentFolderName, isFavorite: updatedFavoriteStatus }]
+          : prevFavorites.favorites.filter(fav => fav.id !== itemId)
+      }));
+    };
+
+    try {
+      const linkType = type === "folder" ? "folder" : "file";
+      const endpoint = `${BASE_URL}/api/v1/${linkType}/${itemId}`;
+      await axios.put(endpoint, { name, isFavorite: updatedFavoriteStatus }, {
+        headers: {
           "Content-type": "application/json",
           "Authorization": `Bearer ${localStorage.getItem("token")}`
         }
       });
-      return;
+
+      updateFavoriteState(!isFavorite); // Update favorite state based on new favorite status
+    } catch (error) {
+      console.log(error);
+      // Rollback favorite status in case of an error
+      setItems(items.map(i => i.id === itemId ? { ...i, isFavorite } : i));
     }
-      catch(e){
-        console.log(e);
-      }
-  };
+};
+
   const createUniqueName = (name: string) => {
     let uniqueName = name;
     let counter = 1;
@@ -207,7 +214,6 @@ export default function FileManager({
             const res = await axios.post(`${BASE_URL}/api/v1/folder`, {
                 name: uniqueName,
                 parentFolderId: payload.parentFolderId,
-                parentFolderName: "personal_workspace"
             }, {
                 headers: {
                     "Content-type": "application/json",
@@ -260,35 +266,82 @@ export default function FileManager({
     }
   }
 
+  
+  const handleRenameClick = () => {
+    if( selectedItems && selectedItems.length > 1){
+      toaster("rename more than one",'',true)
+      return
+    }
+    if(selectedItems){
+      setEditingFolderId(selectedItems[0])
+      const folderName = items.find(item => item.id === selectedItems[0]).name
+      setEditingFolderName(folderName)
+    }
+  }
+
+  const handleRenameKeyDown = async (e: KeyboardEvent<HTMLInputElement>, itemId: string, itemName: string, itemType: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      if(editingFolderName.length === 0){
+        toaster("rename",'',true)
+        return
+      }
+      const uniqueName = createUniqueName(editingFolderName)
+      setItems(items.map(item =>
+        item.id === itemId ? { ...item, name: uniqueName } : item
+      ))
+      setEditingFolderId(null)
+      toaster("rename",itemId,false)
+
+      try {
+        const linkType = itemType === "folder" ? "folder" : "file";
+        const endpoint = `${BASE_URL}/api/v1/${linkType}/${itemId}`;
+        await axios.put(endpoint, { name : uniqueName }, {
+          headers: {
+            "Content-type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`
+          }
+        });
+  
+      } catch (error) {
+        console.log(error);
+        // Rollback favorite status in case of an error
+        setItems(items.map(item =>
+          item.id === itemId ? { ...item, name: itemName } : item
+        ))
+      }
+    }
+  }
+
 
     return (
     <div>
       <div className="w-full">
+        {copiedItems && setCopiedItems && selectedItems &&(
         <div className="flex justify-end space-x-2 items-center py-2 bg-white text-black">
-          {copySelectedItems && selectedItems && (
             <Button onClick={copySelectedItems} disabled={selectedItems.length === 0} className="bg-white text-black hover:bg-gray-300">
               <Copy className="h-4 w-4" />
               Copy
             </Button>
-          )}
-          {pasteItems && (
             <Button onClick={pasteItems} disabled={copiedItems.length === 0} className="bg-white text-black hover:bg-gray-300">
               <Clipboard className=" h-4 w-4" />
               Paste
             </Button>
-          )}
-          {deleteItems && selectedItems && (
             <Button onClick={deleteItems} disabled={selectedItems.length === 0} className="bg-white text-black hover:bg-gray-300">
               <Trash className=" h-4 w-4" />
               Delete
             </Button>
-          )}
+            <Button onClick={handleRenameClick} disabled={selectedItems.length === 0} className="bg-white text-black hover:bg-gray-300">
+              <Edit2 className=" h-4 w-4" />
+              Rename
+            </Button>
         </div>
+        )}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <Table>
             <TableHeader className="bg-gray-100">
               <TableRow>
-                {selectedItems && toggleAll && (
+                {selectedItems && toggleAll && setSelectedItems && (  
                   <TableCell className="w-12">
                     <Checkbox
                       checked={selectedItems.length === items.length}
@@ -317,9 +370,11 @@ export default function FileManager({
             <TableBody>
               <SortableContext items={items.map((item) => item.id)} 
               strategy={verticalListSortingStrategy}>
-                { items.map((item) => (
+                { items.map((item) => {
+                const type = item.type;
+                return(
                   <SortableItem key={item.id} id={item.id} onDoubleClick={() => handleDoubleClick(item.id,item.type)}>
-                    {selectedItems && toggleItem && (
+                    {selectedItems && toggleItem && setSelectedItems && (
                       <TableCell>
                         <Checkbox
                           onPointerDown={(e) => e.stopPropagation()}
@@ -333,9 +388,24 @@ export default function FileManager({
                       .map(([key, value], index) => (
                         <TableCell key={key} className="items-center gap-2">
                           <div className="flex items-center gap-2">
-                            {index === 0 && iconOne && <div className="flex gap-2">{iconOne(item)}</div>}
-                            {index === 1 && iconTwo && <div>{iconTwo(item)}</div>}
-                            <span>{item[key]}</span>
+                            {index === 0 ? (
+                              <div className="flex gap-2">
+                              <div >{getFileIcon(type)}</div>
+                                {editingFolderId === item.id ? (
+                                  <Input
+                                    value={editingFolderName}
+                                    onChange={(e) => setEditingFolderName(e.target.value)}
+                                    onKeyDown={(e) => handleRenameKeyDown(e, item.id, item.name, item.type)}  
+                                    onBlur={() => setEditingFolderId(null)}
+                                    autoFocus
+                                  />
+                                  ) : (
+                                    <span>{item[key]}</span>
+                                  )}
+                                </div>)
+                              :
+                              <span>{item[key]}</span>
+                              }
                           </div>
                         </TableCell>
                       ))}
@@ -355,7 +425,7 @@ export default function FileManager({
                       </div>
                     </TableCell>
                   </SortableItem>
-                ))}
+                )})}
               </SortableContext>
             </TableBody>
           </Table>

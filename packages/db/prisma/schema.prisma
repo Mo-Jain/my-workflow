@@ -59,7 +59,7 @@ model File {
 
 
 model RecentlyViewed {
-  id               Int              @id @default(autoincrement())
+  id               String           @id @default(uuid())
   user             User             @relation(fields: [userId], references: [id])
   userId           String
   file             File             @relation(fields: [fileId], references: [id])
@@ -70,7 +70,7 @@ model RecentlyViewed {
 }
 
 model Assignment {
-  id               Int              @id @default(autoincrement())
+  id               String           @id @default(uuid())
   name             String
   location         String
   dueDate          DateTime?
@@ -81,7 +81,7 @@ model Assignment {
 }
 
 model Workflows {
-  id               Int              @id @default(autoincrement())
+  id               String           @id @default(uuid())
   status           String           @default("on time")
   dueDate          DateTime?        
   userId           String

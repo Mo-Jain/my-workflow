@@ -1,17 +1,23 @@
-import { ChevronDown, FileText, Folder, LayoutGrid, LayoutList, MessageSquare, Star, Video } from "lucide-react"
+import { ChevronDown, FileText, Folder, ImagePlayIcon, LayoutGrid, LayoutList, MessageSquare, Star, Video } from "lucide-react"
 
-export function getFileIcon(type: string) {
+export function getFileIcon(type: string, size:string="h-4 w-4") {
     switch (type) {
       case 'pdf':
-        return <FileText className="h-4 w-4 text-red-500" />
+        return <FileText className={`${size} text-red-500`} />
       case 'docx':
-        return <FileText className="h-4 w-4 text-blue-500" />
+        return <FileText className={`${size} text-blue-500`} />
       case 'video':
-        return <Video className="h-4 w-4 text-purple-500" />
+        return <Video className={`${size} text-purple-500`} />
       case 'folder':
-        return <Folder className="h-4 w-4 text-purple-500" />
+        return <Folder className={`${size}text-purple-500`} />
       case 'dot':
-        return <div className="w-2 h-2 bg-blue-500 rounded-full" />
+        return <div className={`${size} bg-blue-500 rounded-full`} />
+      case 'png':
+      case 'jpg':
+      case 'jpeg':
+      case 'gif':
+      case 'svg':
+        return <ImagePlayIcon className="h-4 w-4 text-green-500" />;
       default:
         return <Folder className="h-4 w-4" />
     }

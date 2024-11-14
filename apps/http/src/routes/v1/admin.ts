@@ -206,7 +206,7 @@ adminRouter.delete("/recentlyViewed/:id",  async (req, res) => {
     {
         const recentlyViewed = await client.recentlyViewed.delete({
             where:{
-                id:parseInt(req.params.id)
+                id:req.params.id
             }
         });
         res.json({
@@ -225,7 +225,7 @@ adminRouter.delete("/assignments/:id",  async (req, res) => {
     {
         const assignments = await client.assignment.delete({
             where:{
-                id:parseInt(req.params.id)
+                id:req.params.id
             }
         });
         res.json({
@@ -244,7 +244,7 @@ adminRouter.delete("/workflows/:id",  async (req, res) => {
     {
         const workflows =await client.workflows.delete({
             where:{
-                id:parseInt(req.params.id)
+                id:req.params.id
             }
         });
         res.json({
@@ -290,10 +290,19 @@ adminRouter.post("/folder",middleware,async (req, res) => {
             res.status(400).json({message: "Wrong folder input format"})
             return
         }
-       
-        const parentFolder = await client.folder.findFirst({
+        
+        console.log("inside the folder")
+        
+        
+        console.log("above parnet folder")
+        let parentFolder = null;
+        if(parsedData.data.parentFolderId==""){
+            createFolder(parsedData.data.name,parentFolder)
+            return
+        }
+        parentFolder = await client.folder.findFirst({
             where: {
-                id: parsedData.data.parentFolderId
+                id: parsedData.data.parentFolderId ?? null
             }
         });
 
@@ -302,31 +311,31 @@ adminRouter.post("/folder",middleware,async (req, res) => {
             return
         }
 
-        const user = await client.user.findFirst({
-            where: {
-                id: req.userId
-            }
-        });
+        createFolder(parsedData.data.name,parentFolder);
+        return;
+
+        async function createFolder(name:string,parentFolder:any | null){
+                                   
+            let message = "Folder created successfully"
+            const folder = await client.folder.create({
+                data: {
+                    name: name,
+                    creatorId: req.userId,
+                    parentFolderId: parentFolder ? parentFolder.id : null ,
+                    path: (parentFolder ? parentFolder?.name : "root")+ "/" + name 
+                }
+            })
+            res.json({
+                message,
+                id: folder.id,
+                creatorId: req.userId,
+                creatorName: req.name,
+                parentFolderId: parentFolder ? parentFolder.id : null ,
+                parentFolderName: parentFolder ?  parentFolder.name : "root",
+                path: (parentFolder ? parentFolder?.name : "root")+ "/" + name
+            })
+        }
         
-        let name = parsedData.data.name;
-        let message = "Folder created successfully"
-        const folder = await client.folder.create({
-            data: {
-                name: name,
-                creatorId: user?.id,
-                parentFolderId: parentFolder.id ,
-                path: parentFolder.name + "/" + parsedData.data.name
-            }
-        })
-        res.json({
-            message,
-            id: folder.id,
-            creatorId: user?.id,
-            creatorName: user?.name,
-            parentFolderId: parentFolder.id ,
-            parentFolderName: parentFolder.name,
-            path: parentFolder.name + "/" + parsedData.data.name
-        })
     }
     catch(e)
     {

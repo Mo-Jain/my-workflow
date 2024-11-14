@@ -1,4 +1,5 @@
-import { Star, Copy, Clipboard, TrashIcon, ChevronsDown } from "lucide-react";
+'use client'
+import { Star, Copy, Clipboard, TrashIcon, ChevronsDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -75,7 +76,15 @@ export default function Admin(){
   const [assignmentsList,setAssignmentsList] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
-  const [newFolderParentId, setNewFolderParentId] = useState('d63b219b-8158-4149-8a16-bdc98f8cf2bb')
+  const [newFolderParentId, setNewFolderParentId] = useState('d810a99b-183e-4e96-8a1e-264d612dcafb')
+  const [isRecentlyViewedDialogOpen, setIsRecentlyViewedDialogOpen] = useState(false)
+  const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false)
+  const [isWorkflowDialogOpen, setIsWorkflowDialogOpen] = useState(false)
+  const [fileId, setFileId] = useState('');
+  const [newAssignmentName, setNewAssignmentName] = useState('')
+  const [newAssignmentLocation, setNewAssignmentLocation] = useState('');
+  const [newCurrentStep, setNewCurrentStep] = useState('');
+  const [newWorkflowName, setNewWorkflowName] = useState('')
 
   async function fetchData() {
     const res = await axios.get(`${BASE_URL}/api/v1/admin/users`);
@@ -105,13 +114,13 @@ export default function Admin(){
   async function deleteFolder(id:string){
     const res = await deleteFunction("folders",setFolderList,id);
   }
-  async function deleteRecentlyViewed(id:number){
+  async function deleteRecentlyViewed(id:string){
     const res = await deleteFunction("recentlyViewed",setRecentlyViewedList,id);
   }
-  async function deleteAssignment(id:number){
+  async function deleteAssignment(id:string){
     const res = await deleteFunction("assignments",setAssignmentsList,id);
   }
-  async function deleteWorkflow(id:number){
+  async function deleteWorkflow(id:string){
     const res = await deleteFunction("workflows",setWorkflowList,id);
   }
   const handleEnterpriseFolder = async () => {
@@ -133,6 +142,76 @@ export default function Admin(){
       toaster("create",'',true);
     }
 
+  }
+
+  const handleCreateRecentlyViewed = async () => {
+    try{
+      const payload = {
+        fileId: fileId
+      }
+      const res = await axios.post(`${BASE_URL}/api/v1/recentlyviewed`,
+        payload,{
+        headers: {
+          "Content-type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
+      });
+      toaster("create",res.data.id,false);
+    }catch(e){
+      toaster("create",'',true);
+    }
+    setIsRecentlyViewedDialogOpen(false);
+    const res5 = await axios.get(`${BASE_URL}/api/v1/admin/recentlyViewed`);
+    setRecentlyViewedList(res5.data.recentlyViewedData);
+    setFileId('');
+  }
+
+  const handleCreateAssignment = async () => {
+    try{
+      const payload = {
+        name: newAssignmentName,
+        location: newAssignmentLocation
+      }
+      const res = await axios.post(`${BASE_URL}/api/v1/assignment`,
+        payload,{
+        headers: {
+          "Content-type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
+      });
+      toaster("create",res.data.id,false);
+    }catch(e){
+      toaster("create",'',true);
+    }
+    setIsAssignmentDialogOpen(false);
+    const res = await axios.get(`${BASE_URL}/api/v1/admin/assignments`);
+    setAssignmentsList(res.data.assignmentData);
+    setNewAssignmentName('');
+    setNewAssignmentLocation('');
+  }
+
+  const handleCreateWorkflow = async () => {
+    try{
+      const payload = {
+        workflowName: newWorkflowName,
+        currentStep: newCurrentStep
+      }
+      const res = await axios.post(`${BASE_URL}/api/v1/workflow`,
+        payload,{
+        headers: {
+          "Content-type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
+      });
+      toaster("create",res.data.id,false);
+    }catch(e){
+      toaster("create",'',true);
+    }
+    setIsWorkflowDialogOpen(false);
+    const res = await axios.get(`${BASE_URL}/api/v1/admin/workflows`);
+    setWorkflowList(res.data.workflowData);
+    setNewWorkflowName('');
+    setNewCurrentStep('');
   }
 
   const handleCreateFolder = async () => {
@@ -168,7 +247,7 @@ export default function Admin(){
   }
   setIsDialogOpen(false)
   setNewFolderName('')
-  setNewFolderParentId('d63b219b-8158-4149-8a16-bdc98f8cf2bb')
+  setNewFolderParentId('d810a99b-183e-4e96-8a1e-264d612dcafb')
 }
 
   if(!userList || !folderList || !fileList || !workflowList || !recentlyViewedList || !assignmentsList){
@@ -218,6 +297,7 @@ export default function Admin(){
                       <TableHead>ID</TableHead>
                       <TableHead>Creator Name</TableHead>
                       <TableHead>Creator Id</TableHead>
+                      <TableHead>Type</TableHead>
                       <TableHead>ParentFolderId</TableHead>
                       <TableHead>ParentFolderName</TableHead>
                       <TableHead>CreatedAt</TableHead>
@@ -231,6 +311,7 @@ export default function Admin(){
                         <TableCell>{file.id}</TableCell>
                         <TableCell>{file.userName}</TableCell>
                         <TableCell>{file.creatorId}</TableCell>
+                        <TableCell>{file.type}</TableCell>
                         <TableCell>{file.parentFolderId}</TableCell>
                         <TableCell>{file.parentFolderName}</TableCell>
                         <TableCell>{file.createdAt}</TableCell>                    
@@ -282,13 +363,13 @@ export default function Admin(){
               <TableCell colSpan={9}>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline">
-                      Add Folder <ChevronsDown className="ml-2 h-4 w-4" />
+                    <Button variant="outline" className="w-52 fles justify-between px-4">
+                      <Plus className="ml-2 h-4 w-4" /><span>Add Folder</span><span></span>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem onSelect={handleEnterpriseFolder}>Enterprise</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setIsDialogOpen(true)}>Other</DropdownMenuItem>
+                  <DropdownMenuContent >
+                    <DropdownMenuItem className="cursor-pointer w-52 flex justify-center" onSelect={handleEnterpriseFolder}>Enterprise</DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer w-52 flex justify-center" onSelect={() => setIsDialogOpen(true)}>Other</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
@@ -311,8 +392,9 @@ export default function Admin(){
                     <TableHead>Delete</TableHead>
                 </TableRow>
                 </TableHeader>
-            { recentlyViewedList.map((recentlyViewed:any) =>(
                 <TableBody>
+            { recentlyViewedList.map((recentlyViewed:any) =>(
+                        <TableRow>
                         <TableCell>{recentlyViewed.fileName}</TableCell>
                         <TableCell>{recentlyViewed.id}</TableCell>
                         <TableCell>{recentlyViewed.userName}</TableCell>
@@ -327,8 +409,18 @@ export default function Admin(){
                               <TrashIcon className="h-4 w-4" />
                             </Button>
                         </TableCell>
+                        </TableRow>
+                 ))}
+                <TableRow>
+                  <TableCell colSpan={9}>
+                        <Button variant="outline" 
+                        onClick={()=>{setIsRecentlyViewedDialogOpen(true)}}
+                        className="w-52 fles justify-between px-4">
+                          <Plus className="ml-2 h-4 w-4" /><span>Add Recently viewed</span><span></span>
+                        </Button>
+                  </TableCell>
+                </TableRow>
                 </TableBody>
-            ))}
             </Table>
             <br/><br/>
             <h2 className="text-lg font-semibold">Assignment</h2>
@@ -343,8 +435,9 @@ export default function Admin(){
                     <TableHead>Delete</TableHead>
                 </TableRow>
                 </TableHeader>
-            { assignmentsList.map((assignment:any) =>(
                 <TableBody>
+            { assignmentsList.map((assignment:any) =>(
+                    <TableRow>
                         <TableCell>{assignment.name}</TableCell>
                         <TableCell>{assignment.userId}</TableCell>
                         <TableCell>{assignment.userName}</TableCell>
@@ -355,9 +448,18 @@ export default function Admin(){
                             <TrashIcon className="h-4 w-4" />
                             </Button>
                         </TableCell>
-
-                </TableBody>
-            ))}
+                    </TableRow>
+              ))}
+                <TableRow>
+                  <TableCell colSpan={9}>
+                        <Button variant="outline" 
+                        onClick={()=>{setIsAssignmentDialogOpen(true)}}
+                        className="w-52 fles justify-between px-4">
+                          <Plus className="ml-2 h-4 w-4" /><span>Add Assignment</span><span></span>
+                        </Button>
+                  </TableCell>
+                </TableRow>
+            </TableBody>
             </Table>
             <br/><br/>
             <h2 className="text-lg font-semibold">Workflows</h2>
@@ -373,8 +475,9 @@ export default function Admin(){
                     <TableHead>Delete</TableHead>
                 </TableRow>
                 </TableHeader>
-            { workflowList.map((workflow:any) =>(
                 <TableBody>
+                { workflowList.map((workflow:any) =>(
+                    <TableRow>
                         <TableCell>{workflow.workflowName}</TableCell>
                         <TableCell>{workflow.id}</TableCell>
                         <TableCell>{workflow.userId}</TableCell>
@@ -386,8 +489,18 @@ export default function Admin(){
                             <TrashIcon className="h-4 w-4" />
                             </Button>
                         </TableCell>
-                </TableBody>
-            ))}         
+                    </TableRow>
+                  ))}  
+                  <TableRow>
+                    <TableCell colSpan={9}>
+                          <Button variant="outline" 
+                          onClick={()=>{setIsWorkflowDialogOpen(true)}}
+                          className="w-52 fles justify-between px-4">
+                            <Plus className="ml-2 h-4 w-4" /><span>Add Workflow</span><span></span>
+                          </Button>
+                    </TableCell>
+                  </TableRow>       
+            </TableBody>
             </Table>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogContent>
@@ -423,6 +536,95 @@ export default function Admin(){
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            <Dialog open={isRecentlyViewedDialogOpen} onOpenChange={setIsRecentlyViewedDialogOpen}>
+              <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Recently viewed</DialogTitle>
+              </DialogHeader>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium text-left ">File Id</label>
+                    <input
+                      type="text"
+                      value={fileId}
+                      onChange={(e) => setFileId(e.target.value)}
+                      className="col-span-3 text-sm text-black border-none outline-none rounded-md p-2"
+                    />
+                  </div>
+                <DialogFooter>
+                  <Button type="submit" onClick={handleCreateRecentlyViewed}>Create Recently viewed</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            <Dialog open={isAssignmentDialogOpen} onOpenChange={setIsAssignmentDialogOpen}>
+              <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Assignments</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="name" className="text-right">
+                     Assignment Name
+                    </Label>
+                    <Input
+                      id="name"
+                      value={newAssignmentName}
+                      onChange={(e) => setNewAssignmentName(e.target.value)}
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="assignmentLocationId" className="text-right">
+                     Assignment Location
+                    </Label>
+                    <Input
+                      id="assignmentLocationId"
+                      value={newAssignmentLocation}
+                      onChange={(e) => setNewAssignmentLocation(e.target.value)}
+                      className="col-span-3"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="submit" onClick={handleCreateAssignment}>Create Recently viewed</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            <Dialog open={isWorkflowDialogOpen} onOpenChange={setIsWorkflowDialogOpen}>
+              <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Assignments</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="name" className="text-right">
+                     Workflow Name
+                    </Label>
+                    <Input
+                      id="name"
+                      value={newWorkflowName}
+                      onChange={(e) => setNewWorkflowName(e.target.value)}
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="currentStepId" className="text-right">
+                     Current Step
+                    </Label>
+                    <Input
+                      id="currentStepId"
+                      value={newCurrentStep}
+                      onChange={(e) => setNewCurrentStep(e.target.value)}
+                      className="col-span-3"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="submit" onClick={handleCreateWorkflow}>Create Recently viewed</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            
       </div>
     </div>
   );

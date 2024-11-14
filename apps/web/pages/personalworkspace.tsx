@@ -156,7 +156,6 @@ export default function PersonalWorkspace() {
             setItems={setFiles}
             hasFavorite={true}
             parentFolderId={workspaceId}
-            iconOne={(file) => getFileIcon(file.type)}
             copiedItems={copiedFolders}
             setCopiedItems={setCopiedFolders}
             toggleItem={toggleFile}

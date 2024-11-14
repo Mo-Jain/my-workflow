@@ -1,17 +1,65 @@
 import MyWorkflow from "@/components/MyWorkflow"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { favoriteItems } from "@/lib/store/selectors/favorites"
+import { favoriteItems } from "@/lib/store/selectors/favoritesSelectors"
+import { get } from "http"
 import { FileText, Folder, Clock, Star, Workflow, CheckCircle2 } from "lucide-react"
 import { useRouter } from 'next/router'
-import { useState } from "react"
-import { useRecoilValue } from "recoil"
+import { useEffect, useState } from "react"
+import { useRecoilValue, useSetRecoilState } from "recoil"
+import { getFileIcon } from "./icon/icon"
+import { favoritesState } from "@/lib/store/atoms/favorites"
+import { BASE_URL } from "@/next.config"
+import axios from "axios"
+import { recentlyViewedItems } from "@/lib/store/selectors/recentlyViewedSelectors"
 
 
 export default function Home() {
   const [workflowVisible, setWorkflowVisible] = useState(false);
   const favorites = useRecoilValue(favoriteItems);
   const router = useRouter();
+  const setFavorite = useSetRecoilState(favoritesState);
+  const recentlyViewed = useRecoilValue(recentlyViewedItems);
+
+  const toggleFavoriteItem = async (itemId: string) => {
+    const item = favorites.find(item => item.id === itemId);
+    if (!item) return;
+
+    const { isFavorite, type, name, location } = item;
+    const updatedFavoriteStatus = !isFavorite;
+    
+    // Helper to update favorite state
+    const updateFavoriteState = (isFavorite: boolean) => {
+      setFavorite(prevFavorites => ({
+        ...prevFavorites,
+        favorites: isFavorite
+          ? [...prevFavorites.favorites, { id: itemId, name, type, location, isFavorite: updatedFavoriteStatus }]
+          : prevFavorites.favorites.filter(fav => fav.id !== itemId)
+      }));
+    };
+
+    try {
+      const linkType = type === "folder" ? "folder" : "file";
+      const endpoint = `${BASE_URL}/api/v1/${linkType}/${itemId}`;
+      await axios.put(endpoint, { name, isFavorite: updatedFavoriteStatus }, {
+        headers: {
+          "Content-type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        }
+      });
+
+      updateFavoriteState(!isFavorite); // Update favorite state based on new favorite status
+    } catch (error) {
+      console.log(error);
+      
+    }
+  };
+
+  function handleDoubleClick(id:string,type:string) {
+    if(type == "folder"){
+      router.push(`/node/${id}`)
+    }
+  }
 
   return (
     <>
@@ -51,11 +99,14 @@ export default function Home() {
               <CardTitle className="text-sm font-medium">My Assignments</CardTitle>
             </CardHeader>
             <CardContent className="h-[calc(100%-4rem)] flex items-center">
+              
               <div className="flex items-start gap-2 text-sm">
                 <FileText className="h-4 w-4 shrink-0" />
                 <div>
                   <div>NFA Form - 10/Sep/2024 03:16 PM</div>
                   <div className="text-xs text-muted-foreground">30079647 - NFA WF - 10/Sep/2024 03:16...</div>
+                </div>
+                <div className="flex items-center gap-2">
                 </div>
               </div>
             </CardContent>
@@ -111,25 +162,38 @@ export default function Home() {
                   <CardTitle className="text-sm font-medium">Favorites</CardTitle>
               </CardHeader>
               {favorites.length > 0 ? 
-              <CardContent className="h-[calc(100%-4rem)] flex flex-col items-center justify-center text-muted-foreground">
-                <FileText className="h-12 w-12 text-gray-200 mb-2" />
+              <CardContent className="h-[calc(100%-4rem)] flex flex-col items-center px-0 text-muted-foreground">
                 {favorites.map((item:any)=>(
-                    <div className="flex items-center gap-2">
-                      {
-                        item.type === "folder" ? 
-                        <Folder className="h-4 w-4 text-gray-400" />
-                        :
-                        <FileText className="h-4 w-4 text-gray-400" />
-                      }
-                      <span className="text-sm">{item.name}</span>
-                    </div>
+                  <div 
+                    key={item.id}
+                    onDoubleClick={() => handleDoubleClick(item.id,item.type)}
+                    className="flex justify-between cursor-pointer gap-2 w-full text-black p-1 px-2 border bg-grey-100" >
+                      <div className="flex gap-2 items-center">
+                        {getFileIcon(item.type)}
+                        <span className="text-sm">{item.name}</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) =>{ 
+                          toggleFavoriteItem(item.id)
+                        }}
+                        aria-label={item.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                      >
+                        <Star className={item.isFavorite ? "fill-yellow-400" : "fill-none"} />
+                      </Button>
+                  </div>
                 ))}
               </CardContent>
               :
-              <CardContent className="h-[calc(100%-4rem)] flex flex-col items-center justify-center text-muted-foreground">
-                <FileText className="h-12 w-12 text-gray-200 mb-2" />
-                There are no items to display.
-              </CardContent>
+              <>
+                
+                <CardContent className="h-[calc(100%-4rem)] flex flex-col items-center justify-center text-muted-foreground">
+                  <FileText className="h-12 w-12 text-gray-200 mb-2" />
+                  There are no items to display.
+                </CardContent>
+              </>
               }
           </Card>
           
@@ -139,11 +203,18 @@ export default function Home() {
               <Clock className="h-5 w-5 text-purple-500" />
               <CardTitle className="text-sm font-medium">Recently Accessed</CardTitle>
             </CardHeader>
-            <CardContent className="h-[calc(100%-4rem)] flex items-center">
-              <div className="flex items-center gap-2 text-sm">
-                <FileText className="h-4 w-4 text-red-500" />
-                ANR - PROD - ECM - UG - NFA & Letters Workflow
-              </div>
+            <CardContent className="h-[calc(100%-4rem)] flex flex-col items-center px-0 text-muted-foreground">
+            {recentlyViewed.map((item:any)=>(
+                  <div 
+                    key={item.id}
+                    className="flex justify-between cursor-pointer gap-2 w-full text-black py-2 px-2 border bg-grey-100 hover:bg-gray-100" >
+                      <div className="flex gap-2 items-center">
+                        {getFileIcon(item.type)}
+                        <span className="text-sm">{item.name}</span>
+                      </div>
+                      
+                  </div>
+                ))}
             </CardContent>
           </Card>
 

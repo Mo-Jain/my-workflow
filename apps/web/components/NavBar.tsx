@@ -93,7 +93,7 @@ const Header = () => {
             <span className="sr-only">Favorites</span>
           </Button>
           <Avatar className="h-8 w-8 bg-blue-900 text-white">
-            <Profile shortName={shortName} name={userName} router={router}/>
+            <Profile shortName={shortName} name={userName} router={router} setShortName={setShortName}/>
           </Avatar>
         </div>
       </header>
@@ -103,10 +103,11 @@ const Header = () => {
 
 export default Header;
 
-const Profile = ({shortName, name, router}:{
+const Profile = ({shortName, name, router,setShortName}:{
   shortName: string,
   name: string | null,
   router: NextRouter,
+  setShortName:React.Dispatch<React.SetStateAction<string>>
 }) => {
 
   const setUser  = useSetRecoilState(userState);
@@ -140,7 +141,8 @@ const Profile = ({shortName, name, router}:{
                   isLoading:false,
                   username:null,
                   name:null
-              })
+              }),
+              setShortName("")
               console.log(userName)
               router.push('/auth-page');
             }}>

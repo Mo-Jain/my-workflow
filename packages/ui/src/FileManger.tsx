@@ -14,7 +14,7 @@ import { useState } from "react";
 interface FileManagerProps {
   headers: string[];
   items: any[];
-  toggleFavorite?: (id: number) => void;
+  toggleFavorite?: (id: string) => void;
   hasSelect: boolean;
   iconOne?: (item: any) => JSX.Element;
   iconTwo?: (item: any) => JSX.Element;
@@ -38,7 +38,7 @@ export default function FileManager({
     setSelectedItems(checked ? items.map((item) => item.id) : []);
   };
 
-  const toggleItem = (itemId: number) => {
+  const toggleItem = (itemid: string) => {
     setSelectedItems((current) =>
       current.includes(itemId)
         ? current.filter((id) => id !== itemId)

@@ -80,7 +80,7 @@ assignmentRouter.put("/:id", middleware, async (req, res) => {
         
         await client.assignment.update({
             where: {
-                id: parseInt(req.params.id)
+                id: req.params.id
             },
             data: {
                 location: parsedData.data.location,

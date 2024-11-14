@@ -19,7 +19,7 @@ export default function RecentlyAccessed(
   { 
     headers: string[],
     items: any[],
-    toggleFavorite: (id: number,index: number) => void,
+    toggleFavorite: (id: string,index: number) => void,
     isFavorite:boolean,
     iconOne: JSX.Element;
     iconTwo: JSX.Element;
@@ -38,7 +38,7 @@ export default function RecentlyAccessed(
     setSelectedItems(checked ? items.map(item => item.id) : [])
   }
 
-  const toggleItem = (itemId: number) => {
+  const toggleItem = (itemid: string) => {
     setSelectedItems(current =>
       current.includes(itemId)
         ? current.filter(id => id !== itemId)

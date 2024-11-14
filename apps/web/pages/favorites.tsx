@@ -1,11 +1,14 @@
+'use client'
 import { ArrowLeft, ChevronDown, FileText, Folder, Search, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { useRouter } from "next/router"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import FileManager from "@/components/FileManger"
 import {getFileIcon} from "./icon/icon"
+import { favoriteItems } from "@/lib/store/selectors/favoritesSelectors"
+import { useRecoilValue } from "recoil"
 
 // This is sample data - in a real app this would come from your backend
 const itemsList = [
@@ -36,6 +39,7 @@ interface Item {
 export default function Favorites() {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [items, setItems] = useState<Item[]>(itemsList);
+  const favorites = useRecoilValue(favoriteItems);
 
   const toggleAll = (checked: boolean) => {
     setSelectedItems(checked ? items.map(item => item.id) : [])
@@ -48,26 +52,11 @@ export default function Favorites() {
         : [...current, itemId]
     )
   }
+  useEffect(() => {
+    console.log(favorites);
+    setItems(favorites);
+  },[favorites])
 
-  //write code to toggle favorite as well as update the original itemList array
-  const toggleFavorite = (itemId: string) => {
-    console.log(itemId);
-    setItems(prevItems => {
-      console.log(prevItems);
-      return (
-      prevItems.map(item =>
-        item.id === itemId ? { ...item, isFavorite: !item.isFavorite } : item
-      )
-    )
-    }
-    );
-  
-    // Update the original itemsList array
-    const itemIndex = itemsList.findIndex(item => item.id === itemId);
-    if (itemIndex > -1) {
-      itemsList[itemIndex].isFavorite = !itemsList[itemIndex].isFavorite;
-    }
-  };
 
   const router = useRouter();
 
@@ -112,7 +101,6 @@ export default function Favorites() {
           items={items}
           setItems={setItems}
           hasFavorite={true}
-          iconOne={(file) =>getFileIcon(file.type)}
           toggleAll={toggleAll}
           toggleItem={toggleItem}
           selectedItems={selectedItems}

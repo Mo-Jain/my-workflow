@@ -91,6 +91,7 @@ declare global {
       export interface Request {
         role?: "Admin" | "User";
         userId?: string;
+        name?: string;
       }
     }
 }

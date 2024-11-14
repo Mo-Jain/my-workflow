@@ -1,4 +1,4 @@
-import * as React from "react"
+import {useEffect, useState} from "react"
 import { ChevronDown, FileText, Folder, LayoutGrid, LayoutList, MessageSquare, Star, Video } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -14,6 +14,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import FileManager from "@/components/FileManger"
 import {getFileIcon} from "./icon/icon"
 import GridLayout from "@/components/Gridlayout"
+import axios from "axios"
+import { BASE_URL } from "@/next.config"
+import Header from "@/components/Header"
 
 // Sample data - in a real app this would come from your backend
 const filesList = [
@@ -68,14 +71,29 @@ interface File {
   isFavorite: boolean
 }
 export default function UserGuides() {
-  const [selectedFiles, setSelectedFiles] = React.useState<string[]>([])
-  const [sortConfig, setSortConfig] = React.useState<{
-    key: 'name' | 'size' | 'modified',
-    direction: 'asc' | 'desc'
-  }>({ key: 'name', direction: 'asc' })
-  const [viewType, setViewType] = React.useState<'list' | 'grid'>('list')
-  const [files, setFiles] = React.useState<File[]>(filesList);
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([])
+  const [viewType, setViewType] = useState<'list' | 'grid'>('list')
+  const [files, setFiles] = useState<File[]>(filesList);
+  const [newFolderName, setNewFolderName] = useState<string>("");
+  const [copiedFolders, setCopiedFolders] = useState<File[]>([])
 
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await axios.get(`${BASE_URL}/api/v1/userGuide`,{
+          headers:{
+            authorization : `Bearer `+ localStorage.getItem('token')
+          }
+        })
+        setFiles([...res.data.folderData,...res.data.fileData]);
+      }
+      catch (error) {
+        console.log(error);
+      }
+    }
+      fetchData();
+  }, []);
 
   const toggleAll = (checked: boolean) => {
     setSelectedFiles(checked ? files.map(file => file.id) : [])
@@ -89,26 +107,6 @@ export default function UserGuides() {
     )
   }
 
-  const toggleFavorite = (fileId: string) => {
-    setFiles(prevFiles =>
-      prevFiles.map(file =>
-        file.id === fileId ? { ...file, isFavorite: !file.isFavorite } : file
-      )
-    );
-  
-  };
-
-
-
-  const handleSort = (key: 'name' | 'size' | 'modified') => {
-    setSortConfig({
-      key,
-      direction:
-        sortConfig.key === key && sortConfig.direction === 'asc'
-          ? 'desc'
-          : 'asc',
-    })
-  }
 
   const toggleViewType = () => {
     setViewType(current => current === 'list' ? 'grid' : 'list')
@@ -140,9 +138,14 @@ export default function UserGuides() {
           </div>
         </div>
       </div>
-
+      <Header
+        newFolderName={newFolderName}
+        setNewFolderName={setNewFolderName}
+        items={files}
+        setItems={setFiles}
+        parentFolderId={"2be1f5f1-e756-489f-a0ca-221dd8df89a0"}
+      />
       <div >
-        
       <div>
         {viewType === 'list' ? (
           <>
@@ -151,10 +154,13 @@ export default function UserGuides() {
               items={files}
               setItems={setFiles}
               hasFavorite={true}
-              iconOne={(file) =>getFileIcon(file.type)}
-              toggleAll={toggleAll}
+              parentFolderId={"2be1f5f1-e756-489f-a0ca-221dd8df89a0"}
+              copiedItems={copiedFolders}
+              setCopiedItems={setCopiedFolders}
               toggleItem={toggleFile}
+              toggleAll={toggleAll}
               selectedItems={selectedFiles}
+              setSelectedItems={setSelectedFiles}
               />
           </>
         ) : (

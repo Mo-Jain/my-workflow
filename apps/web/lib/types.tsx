@@ -1,5 +1,5 @@
 export type File = {
-    id: number;
+    id: string;
     name: string;
     type: string;
     size: string;
