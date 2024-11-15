@@ -1,25 +1,35 @@
-import { ChevronDown, FileText, Folder, ImagePlayIcon, LayoutGrid, LayoutList, MessageSquare, Star, Video } from "lucide-react"
+import { CheckCircle2, CheckCircle2Icon, ChevronDown, Clock, FileText, Folder, ImagePlayIcon, LayoutGrid, LayoutList, LucideCheckCircle2, MessageSquare, Star, Video, Workflow } from "lucide-react"
 
-export function getFileIcon(type: string, size:string="h-4 w-4") {
+export function getFileIcon(type: string, style:string="h-5") {
     switch (type) {
       case 'pdf':
-        return <FileText className={`${size} text-red-500`} />
+        return <FileText strokeWidth={1} className={`${style} text-red-500 fill`} />
       case 'docx':
-        return <FileText className={`${size} text-blue-500`} />
+        return <FileText strokeWidth={1} className={`${style} text-blue-500`} />
       case 'video':
-        return <Video className={`${size} text-purple-500`} />
+        return <Video className={`${style} text-purple-500`} />
       case 'folder':
-        return <Folder className={`${size}text-purple-500`} />
+        return <Folder strokeWidth={1} className={`${style}text-purple-500 fill-orange-300`} />
       case 'dot':
-        return <div className={`${size} bg-blue-500 rounded-full`} />
+        return <div className={`${style} bg-blue-500 rounded-full`} />
       case 'png':
       case 'jpg':
       case 'jpeg':
       case 'gif':
       case 'svg':
         return <ImagePlayIcon className="h-4 w-4 text-green-500" />;
+      case 'workflow':
+        return <Workflow strokeWidth={2} className={`${style} text-black-500`} />
+      case undefined:
+        return <div className={`${style} bg-blue-500 rounded-full`} />
+      case 'check':
+        return <LucideCheckCircle2 strokeWidth={1} className={`${style} text-green-500`} />
+      case 'star':
+        return <Star strokeWidth={1} className={`${style}`} />
+      case 'clock' :
+        return <Clock className={`${style}`} />
       default:
-        return <Folder className="h-4 w-4" />
+        return <FileText strokeWidth={1} className={`${style} text-gray-950 fill-gray-400`} />
     }
   }
 

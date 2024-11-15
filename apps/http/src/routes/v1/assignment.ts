@@ -21,7 +21,7 @@ assignmentRouter.get("/", middleware, async (req, res) => {
             return
         }
 
-        const assignment = user?.assignments.map((assignment:any) => ({
+        const assignmentData = user?.assignments.map((assignment:any) => ({
             id: assignment.id,
             name: assignment.name,
             location: assignment.location,
@@ -32,7 +32,7 @@ assignmentRouter.get("/", middleware, async (req, res) => {
         }))
 
         res.json({
-            assignment
+            assignmentData
         })
     } catch (e) {
         res.status(400).json({ message: "Internal server error" })
@@ -61,7 +61,7 @@ assignmentRouter.post("/", middleware, async (req, res) => {
 
         res.json({
             message: "Assignment created successfully",
-            id: assignment.id
+            id: assignment
         })
     } catch (e) {
         res.status(400).json({ message: "Internal server error" })

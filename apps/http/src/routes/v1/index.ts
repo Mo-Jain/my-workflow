@@ -21,7 +21,7 @@ export const formatItem = (item: any, isFolder: boolean) => ({
     id: item.id,
     name: item.name,
     type: isFolder ? "folder" : item.type,
-    items: isFolder ? item.subfolders.length + item.files.length : undefined,
+    items: isFolder ? item.subfolders.length + item.files.length + " items" : undefined,
     size: !isFolder ? item.size : undefined,
     modified: item.createdAt,
     isFavorite: item.isFavorite

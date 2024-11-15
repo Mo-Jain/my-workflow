@@ -1,6 +1,8 @@
+import { assignmentState } from "@/lib/store/atoms/assignment";
 import { favoritesState } from "@/lib/store/atoms/favorites";
 import { recentlyViewedState } from "@/lib/store/atoms/recentlyViewed";
 import { userState } from "@/lib/store/atoms/user";
+import { workflowState } from "@/lib/store/atoms/workflow";
 import { favoriteIsLoading, favoriteItems } from "@/lib/store/selectors/favoritesSelectors";
 import axios from "axios";
 import React, { useEffect } from "react"
@@ -12,7 +14,8 @@ const InitUser = () => {
     const setUser  = useSetRecoilState(userState);
     const setFavorite = useSetRecoilState(favoritesState);
     const setRecentlyViewed  = useSetRecoilState(recentlyViewedState);
-    const favorites = useRecoilValue(favoritesState);
+    const setWorkflow  = useSetRecoilState(workflowState);
+    const setAssignment = useSetRecoilState(assignmentState);
 
     useEffect(() => {
 
@@ -55,9 +58,8 @@ const InitUser = () => {
                 })
                 const favoriteFolders = favRes.data.favoriteFolders.map((folder: any) =>({...folder,type:'folder'}));
                 const favoriteFiles = favRes.data.favoriteFiles.map((file: any) =>({...file,type:'file'}));;
-                console.log("favoriteFolders :",favoriteFolders);
-                console.log("favoriteFiles :",favoriteFiles);
-
+    
+                
                 setFavorite(prevFavorites => ({
                     ...prevFavorites,
                     favorites: [...favoriteFolders,...favoriteFiles ]
@@ -103,6 +105,60 @@ const InitUser = () => {
             }
             catch(err){
                 setRecentlyViewed({
+                    isLoading:false,
+                    items:[]
+                })
+            }
+            try{
+                const workflowRes = await axios.get(`${BASE_URL}/api/v1/workflow`,{
+                    headers:{
+                        authorization : `Bearer `+ localStorage.getItem('token')
+                    }
+                })
+                const workflowItems = workflowRes.data.workflowData;
+
+                if(workflowItems){
+                    setWorkflow({
+                        isLoading:false,
+                        items:workflowItems
+                    })
+                }
+                else{
+                    setWorkflow({
+                        isLoading:false,
+                        items:[]
+                    })
+                }
+            }
+            catch(err){
+                setWorkflow({
+                    isLoading:false,
+                    items:[]
+                })  
+            }
+        
+            try{
+                const assignmentRes = await axios.get(`${BASE_URL}/api/v1/assignment`,{
+                    headers:{
+                        authorization : `Bearer `+ localStorage.getItem('token')
+                    }
+                })
+                const assignmentItems = assignmentRes.data.assignmentData;
+                if(assignmentItems){
+                    setAssignment({
+                        isLoading:false,
+                        items:assignmentItems
+                    })
+                }
+                else{
+                    setAssignment({
+                        isLoading:false,
+                        items:[]
+                    })
+                }
+            }
+            catch(err){
+                setAssignment({
                     isLoading:false,
                     items:[]
                 })

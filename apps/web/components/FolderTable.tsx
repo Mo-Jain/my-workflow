@@ -11,6 +11,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Checkbox } from "@/components/ui/checkbox"
 import { Plus, ChevronDown, Star, Copy, Clipboard, Edit2 } from 'lucide-react'
 import { toast } from "@/hooks/use-toast"
+import { useRecoilState } from 'recoil'
+import { workflowState } from '@/lib/store/atoms/workflow'
+import { copyItemState } from '@/lib/store/atoms/copyItem'
 
 interface Folder {
   id: string
@@ -74,7 +77,6 @@ export default function FoldersTable() {
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null)
   const [editingFolderName, setEditingFolderName] = useState('')
   const router = useRouter()
-
   const handleEnterpriseFolder = () => {
     console.log("Enterprise folder creation logic goes here")
   }

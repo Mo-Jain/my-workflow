@@ -50,7 +50,7 @@ const Header = () => {
           </Button>
           {!isHome &&
             <Button variant="ghost" size="icon" className="text-gray-600" onClick={() => router.push('/')}>
-              <HomeIcon className="h-8 w-8" />
+              <HomeIcon className="h-5 w-5" />
               <span className="sr-only">Help</span>
             </Button>
           }

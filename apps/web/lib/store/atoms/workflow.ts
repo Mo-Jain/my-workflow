@@ -5,14 +5,14 @@ interface Item {
     status: string,
     durDate: Date,
     type: string,
-    workflow: string,
-    currentstep: string,
-    assignedto: string,
-    startdate: Date
+    workflowName: string,
+    currentStep: string,
+    assignedTo: string,
+    startDate: Date
   }
   
-export const recentlyViewedState = atom<{isLoading:boolean,items: Item[] }>({
-  key: "recentlyViewedState",
+export const workflowState = atom<{isLoading:boolean,items: Item[] }>({
+  key: "workflowState",
   default: {
     isLoading: false,
     items: []

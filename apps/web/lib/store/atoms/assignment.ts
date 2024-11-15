@@ -7,6 +7,7 @@ interface Item {
     dueDate: string,
     priority: string,
     status: string,
+    from: string
   }
 export const assignmentState = atom<{isLoading:boolean,items: Item[] }>({
   key: "assignmentState",

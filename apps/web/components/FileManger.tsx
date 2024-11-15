@@ -31,8 +31,9 @@ import { toaster } from "@/pages/admin";
 import { useRouter } from "next/router";
 import { getFileIcon } from "@/pages/icon/icon";
 import { favoritesState } from "@/lib/store/atoms/favorites";
-import { useSetRecoilState } from "recoil";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import { Input } from "./ui/input";
+import { copyItemState } from "@/lib/store/atoms/copyItem";
 
 interface FileManagerProps {
   headers: string[];
@@ -46,6 +47,8 @@ interface FileManagerProps {
   toggleItem?: (itemId: string,checked: boolean) => void;
   selectedItems?: string[];
   setSelectedItems?: React.Dispatch<React.SetStateAction<string[]>>;
+  iconSize?: string;
+  iconStyle?: string;
 }
 
 export default function FileManager({
@@ -60,6 +63,7 @@ export default function FileManager({
   toggleItem,
   selectedItems,
   setSelectedItems,
+  iconStyle,
   }: FileManagerProps) {
   const [sortConfig, setSortConfig] = useState<{
     key: string;
@@ -70,6 +74,7 @@ export default function FileManager({
   const setFavorite = useSetRecoilState(favoritesState);
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null)
   const [editingFolderName, setEditingFolderName] = useState('')
+  const [copiedItem, setCopiedItem] = useRecoilState(copyItemState);
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -149,7 +154,7 @@ export default function FileManager({
       // Rollback favorite status in case of an error
       setItems(items.map(i => i.id === itemId ? { ...i, isFavorite } : i));
     }
-};
+  };
 
   const createUniqueName = (name: string) => {
     let uniqueName = name;
@@ -245,9 +250,9 @@ export default function FileManager({
   };
 
   const pasteItems = async () => {
-    if (!copiedItems || copiedItems.length === 0) return;
+    if (!copiedItem || copiedItem.length === 0) return;
     // Process each copied folder or file
-    for (const item of copiedItems) {
+    for (const item of copiedItem) {
         await pasteFileOrFolder(item);
     }
     setSelectedItems && setSelectedItems([]);
@@ -255,8 +260,8 @@ export default function FileManager({
 
   const copySelectedItems = () => {
     const itemsToCopy = items.filter((item) => selectedItems?.includes(item.id))
-    setCopiedItems && setCopiedItems(itemsToCopy)
-    // console.log(copiedItems);
+    setCopiedItem && setCopiedItem(itemsToCopy)
+    // console.log(copiedItem);
     toaster('copie','',false);
   }
 
@@ -279,7 +284,7 @@ export default function FileManager({
     }
   }
 
-  const handleRenameKeyDown = async (e: KeyboardEvent<HTMLInputElement>, itemId: string, itemName: string, itemType: string) => {
+  const handleRenameKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>, itemId: string, itemName: string, itemType: string) => {
     if (e.key === 'Enter') {
       e.preventDefault()
       if(editingFolderName.length === 0){
@@ -323,7 +328,7 @@ export default function FileManager({
               <Copy className="h-4 w-4" />
               Copy
             </Button>
-            <Button onClick={pasteItems} disabled={copiedItems.length === 0} className="bg-white text-black hover:bg-gray-300">
+            <Button onClick={pasteItems} disabled={copiedItem.length === 0} className="bg-white text-black hover:bg-gray-300">
               <Clipboard className=" h-4 w-4" />
               Paste
             </Button>
@@ -389,8 +394,8 @@ export default function FileManager({
                         <TableCell key={key} className="items-center gap-2">
                           <div className="flex items-center gap-2">
                             {index === 0 ? (
-                              <div className="flex gap-2">
-                              <div >{getFileIcon(type)}</div>
+                              <div className="flex gap-2 items-center">
+                              <div >{getFileIcon(type,iconStyle)}</div>
                                 {editingFolderId === item.id ? (
                                   <Input
                                     value={editingFolderName}
@@ -411,7 +416,7 @@ export default function FileManager({
                       ))}
                     <TableCell>
                       <div>
-                      <Button
+                      {hasFavorite && <Button
                         variant="ghost"
                         size="sm"
                         onPointerDown={(e) => e.stopPropagation()}
@@ -421,7 +426,7 @@ export default function FileManager({
                         aria-label={item.isFavorite ? "Remove from favorites" : "Add to favorites"}
                       >
                         <Star className={item.isFavorite ? "fill-yellow-400" : "fill-none"} />
-                      </Button>
+                      </Button>}
                       </div>
                     </TableCell>
                   </SortableItem>

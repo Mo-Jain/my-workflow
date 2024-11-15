@@ -81,12 +81,17 @@ adminRouter.get("/recentlyViewed",  async (req, res) => {
 
         const recentlyViewedData = recentlyViewedFiles.map((recentlyViewed) =>({
             id:recentlyViewed.id,
-            fileName:recentlyViewed.file.name,
+            name:recentlyViewed.file.name,
+            type:recentlyViewed.file.type,
+            location:recentlyViewed.file.parentFolder?.name,
+            isFavorite:recentlyViewed.file.isFavorite,
+            lastAccessed:recentlyViewed.file.updatedAt,
+            size:recentlyViewed.file.size,
+            created:recentlyViewed.file.createdAt,
             fileId:recentlyViewed.file.id,
             userId:recentlyViewed.user.id,
             userName:recentlyViewed.user.name,
             parentFolderId:recentlyViewed.file.parentFolderId,
-            parentFolderName:recentlyViewed.file.parentFolder?.name,
             path:recentlyViewed.file.path
         }))
 
@@ -109,7 +114,7 @@ adminRouter.get("/assignments", async (req, res) => {
             }
         });
 
-        const assignmentData = assignments.map(assignment =>({...assignment,userName:assignment.user.name}))
+        const assignmentData = assignments.map(assignment =>({...assignment,userName:assignment.user.name,from:assignment.user.name}))
 
         res.json({
             assignmentData,

@@ -16,7 +16,7 @@ workflowRouter.get("/", middleware, async (req, res) => {
             }
         })
 
-        const workflows = user?.workflows.map((workflow:any) => ({
+        const workflowData = user?.workflows.map((workflow:any) => ({
             id: workflow.id,
             status: workflow.status,
             dueDate: workflow.dueDate ?? null,
@@ -27,7 +27,7 @@ workflowRouter.get("/", middleware, async (req, res) => {
         }))
 
         res.json({
-            workflows
+            workflowData
         })
     } catch (e) {
         res.status(400).json({ message: "Internal server error" })
@@ -61,7 +61,7 @@ workflowRouter.post("/", middleware, async (req, res) => {
 
         res.json({
             message: "Workflow created successfully",
-            id: workflow.id
+            workflow
         })
     } catch (e) {
         res.status(400).json({ message: "Internal server error" })

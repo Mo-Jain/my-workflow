@@ -19,6 +19,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { useRecoilValue, useSetRecoilState } from "recoil";
+import { workflowState } from "@/lib/store/atoms/workflow";
+import { recentlyViewedState } from "@/lib/store/atoms/recentlyViewed";
+import { assignmentState } from "@/lib/store/atoms/assignment";
 interface Folder {
   id: string
   name: string
@@ -85,6 +89,9 @@ export default function Admin(){
   const [newAssignmentLocation, setNewAssignmentLocation] = useState('');
   const [newCurrentStep, setNewCurrentStep] = useState('');
   const [newWorkflowName, setNewWorkflowName] = useState('')
+  const setWorkflow = useSetRecoilState(workflowState);
+  const setRecentlyViewed = useSetRecoilState(recentlyViewedState);
+  const setAssignments = useSetRecoilState(assignmentState);
 
   async function fetchData() {
     const res = await axios.get(`${BASE_URL}/api/v1/admin/users`);
@@ -164,6 +171,20 @@ export default function Admin(){
     const res5 = await axios.get(`${BASE_URL}/api/v1/admin/recentlyViewed`);
     setRecentlyViewedList(res5.data.recentlyViewedData);
     setFileId('');
+    const recentlyVieweds = res5.data.recentlyViewedData.map((recentlyViewed:any) => ({
+      id: recentlyViewed.id,
+      name: recentlyViewed.name,
+      type: recentlyViewed.type,
+      location: recentlyViewed.location,
+      isFavorite: recentlyViewed.isFavorite,
+      lastAccessed: recentlyViewed.lastAccessed,
+      size: recentlyViewed.size,
+      created: recentlyViewed.created
+    }));
+    setRecentlyViewed({
+      isLoading:false,
+      items:recentlyVieweds
+    });
   }
 
   const handleCreateAssignment = async () => {
@@ -179,6 +200,7 @@ export default function Admin(){
           "Authorization": `Bearer ${localStorage.getItem("token")}`
         },
       });
+      
       toaster("create",res.data.id,false);
     }catch(e){
       toaster("create",'',true);
@@ -186,8 +208,23 @@ export default function Admin(){
     setIsAssignmentDialogOpen(false);
     const res = await axios.get(`${BASE_URL}/api/v1/admin/assignments`);
     setAssignmentsList(res.data.assignmentData);
+    const assignments = res.data.assignmentData.map((assignment:any) => ({
+      id: assignment.id,
+      name: assignment.name,
+      location: assignment.location,
+      dueDate: assignment.dueDate ?? null,
+      priority: assignment.priority,
+      status: assignment.status,
+      from: assignment.from,
+    }));
+    setAssignments({
+      isLoading:false,
+      items:assignments
+    });
+    
     setNewAssignmentName('');
     setNewAssignmentLocation('');
+    
   }
 
   const handleCreateWorkflow = async () => {
@@ -203,13 +240,31 @@ export default function Admin(){
           "Authorization": `Bearer ${localStorage.getItem("token")}`
         },
       });
+      console.log(res.data.workflow);
+      
       toaster("create",res.data.id,false);
     }catch(e){
       toaster("create",'',true);
     }
     setIsWorkflowDialogOpen(false);
     const res = await axios.get(`${BASE_URL}/api/v1/admin/workflows`);
-    setWorkflowList(res.data.workflowData);
+    const data = res.data.workflowData;
+    setWorkflowList(data);
+    const workflows = res.data.workflowData.map((workflow:any) => ({
+      id: workflow.id,
+      status: workflow.status,
+      durDate: workflow.durDate,
+      type: workflow.type,
+      workflowName: workflow.workflowName,
+      currentStep: workflow.currentStep,
+      assignedTo: workflow.assignedTo,
+      startDate: workflow.startDate
+    }));
+    setWorkflow({
+      isLoading:false,
+      items:workflows
+    });
+    console.log("workflows :",res.data.workflowData);
     setNewWorkflowName('');
     setNewCurrentStep('');
   }
@@ -395,7 +450,7 @@ export default function Admin(){
                 <TableBody>
             { recentlyViewedList.map((recentlyViewed:any) =>(
                         <TableRow>
-                        <TableCell>{recentlyViewed.fileName}</TableCell>
+                        <TableCell>{recentlyViewed.name}</TableCell>
                         <TableCell>{recentlyViewed.id}</TableCell>
                         <TableCell>{recentlyViewed.userName}</TableCell>
                         <TableCell>{recentlyViewed.userId}</TableCell>

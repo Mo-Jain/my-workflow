@@ -12,9 +12,11 @@ import FileManager from "./FileManger"
 import { useState } from "react"
 import { getFileIcon } from "@/pages/icon/icon"
 import { useRouter } from "next/navigation"
+import { workflowItems } from "@/lib/store/selectors/workflow"
+import { useRecoilValue } from "recoil"
 
 // Sample data - in a real app this would come from your backend
-const workflowsList = [
+const workflowsListnotused = [
   {
     id: "1",
     status: "on time",
@@ -53,8 +55,9 @@ export default function Component(
   {onClose}:
   {onClose:()=>void}
 ) {
-  const [workflows, setWorkflows] = useState<Workflow[]>(workflowsList);
+  const [workflowsList, setWorkflowsList] = useState<Workflow[]>([]);
   const router = useRouter();
+  const workflows = useRecoilValue(workflowItems);
   
   return (
     <div className=" bg-background text-black">
@@ -72,8 +75,9 @@ export default function Component(
         <FileManager
           headers={["Status","Step Due Date","Workflow","CurrentStep","AssignedTo","StartDate"]}
           items={workflows}
-          setItems={setWorkflows}
+          setItems={setWorkflowsList}
           hasFavorite={false}
+          iconStyle="h-3 w-3"
         />
       </div>
     </div>

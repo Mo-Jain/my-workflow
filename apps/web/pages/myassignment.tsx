@@ -11,9 +11,12 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/router"
+import { useRecoilValue } from "recoil"
+import { assignmentItems } from "@/lib/store/selectors/assignment"
+import { getFileIcon } from "./icon/icon"
 
 // Sample data - in a real app this would come from your backend
-const assignments = [
+const assignmentsList = [
   {
     id: 1,
     name: "NFA Form - 04/Nov/2024 03:53 PM",
@@ -35,6 +38,7 @@ const assignments = [
 ]
 
 export default function MyAssignment() {
+  const assignments = useRecoilValue(assignmentItems);
   const router = useRouter();
 
   return (
@@ -86,13 +90,13 @@ export default function MyAssignment() {
                 <TableRow className="cursor-pointer" key={assignment.id} onClick={()=> router.push('/nfaform')}>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Workflow className="h-4 w-4 text-blue-500" />
+                      {getFileIcon('workflow',"h-4 w-4 text-blue-500")}
                       {assignment.name}
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-gray-400" />
+                      {getFileIcon('unknown','h-6 w-6 text-gray-400')}
                       {assignment.location}
                     </div>
                   </TableCell>
@@ -104,7 +108,7 @@ export default function MyAssignment() {
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="bg-green-50 text-green-700">
-                      {assignment.status}
+                      {assignment.status.toLocaleUpperCase()}
                     </Badge>
                   </TableCell>
                   <TableCell>{assignment.from}</TableCell>
