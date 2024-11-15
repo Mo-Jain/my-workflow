@@ -12,6 +12,7 @@ import Header from "@/components/Header"
 import axios from "axios"
 import { BASE_URL } from "@/next.config"
 import { toaster } from "./admin"
+import ActionBar from "@/components/ActionBar"
 
 
 const filesList = [
@@ -80,8 +81,9 @@ export default function PersonalWorkspace() {
   const [viewType, setViewType] = useState<'list' | 'grid'>('list')
   const [files, setFiles] = useState<File[]>([])
   const [newFolderName, setNewFolderName] = useState('new folder')
-  const [copiedFolders, setCopiedFolders] = useState<File[]>([])
-  const [workspaceId,setWorkspaceId] = useState("")
+  const [workspaceId,setWorkspaceId] = useState("");
+  const [editingItemId, setEditingItemId] = useState<string | null>(null)
+  const [editingItemName, setEditingItemName] = useState('')
 
 
   const toggleAll = (checked: boolean) => {
@@ -148,6 +150,15 @@ export default function PersonalWorkspace() {
         setItems={setFiles}
         parentFolderId={workspaceId}
       />
+      <ActionBar
+      items={files}
+      setItems={setFiles}
+      selectedItems={selectedFiles}
+      setSelectedItems={setSelectedFiles}
+      parentFolderId={workspaceId}
+      setEditingItemId={setEditingItemId}
+      setEditingItemName={setEditingItemName}
+      />
       <div>
         {viewType === 'list' ? (
           <FileManager
@@ -155,13 +166,14 @@ export default function PersonalWorkspace() {
             items={files}
             setItems={setFiles}
             hasFavorite={true}
-            parentFolderId={workspaceId}
-            copiedItems={copiedFolders}
-            setCopiedItems={setCopiedFolders}
             toggleItem={toggleFile}
             toggleAll={toggleAll}
             selectedItems={selectedFiles}
             setSelectedItems={setSelectedFiles}
+            editingItemId={editingItemId}
+            setEditingItemId={setEditingItemId}
+            editingItemName={editingItemName}
+            setEditingItemName={setEditingItemName}
           />
         ) : (
           <GridLayout 

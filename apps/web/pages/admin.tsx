@@ -113,22 +113,22 @@ export default function Admin(){
   }, []);
 
   async function deleteUser(id:string){
-    const res = await deleteFunction("users",setUserList,id);
+      await deleteFunction("users",setUserList,id);
   }
   async function deleteFile(id:string){
-    const res = await deleteFunction("files",setFileList,id);
+      await deleteFunction("files",setFileList,id);
   }
   async function deleteFolder(id:string){
-    const res = await deleteFunction("folders",setFolderList,id);
+      await deleteFunction("folders",setFolderList,id);
   }
   async function deleteRecentlyViewed(id:string){
-    const res = await deleteFunction("recentlyViewed",setRecentlyViewedList,id);
+      await deleteFunction("recentlyViewed",setRecentlyViewedList,id);
   }
   async function deleteAssignment(id:string){
-    const res = await deleteFunction("assignments",setAssignmentsList,id);
+      await deleteFunction("assignments",setAssignmentsList,id);
   }
   async function deleteWorkflow(id:string){
-    const res = await deleteFunction("workflows",setWorkflowList,id);
+      await deleteFunction("workflows",setWorkflowList,id);
   }
   const handleEnterpriseFolder = async () => {
     try{

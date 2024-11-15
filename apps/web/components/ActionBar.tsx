@@ -10,6 +10,7 @@ import { copyItemState } from "@/lib/store/atoms/copyItem";
 import { useRecoilState } from "recoil";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import { createUniqueName } from "./FileManger";
 
 
 interface File {
@@ -28,44 +29,26 @@ interface FileManagerProps {
     items: File[]; 
     setItems: React.Dispatch<React.SetStateAction<any[]>>; 
     parentFolderId: string;
-    editingFolderId:string | null;
-    setEditingFolderId : React.Dispatch<React.SetStateAction<string | null>>;
-    editingFolderName: string;
-    setEditingFolderName: React.Dispatch<React.SetStateAction<string>>;
+    setEditingItemId : React.Dispatch<React.SetStateAction<string | null>>;
+    setEditingItemName: React.Dispatch<React.SetStateAction<string>>;
   }
 
-const SelectedBar = (
+const ActionBar = (
     {
         selectedItems,
         setSelectedItems,
         items,
         setItems,
         parentFolderId,
-        editingFolderId,
-        setEditingFolderId,
-        editingFolderName,
-        setEditingFolderName
+        setEditingItemId,
+        setEditingItemName
     }: FileManagerProps
 ) => {
 
     const [copiedItem, setCopiedItem] = useRecoilState(copyItemState);
     const router = useRouter();
 
-    const createUniqueName = (name: string) => {
-      let uniqueName = name;
-      let counter = 1;
-  
-      const extensionIndex = uniqueName.lastIndexOf('.');
-      const baseName = extensionIndex !== -1 ? uniqueName.slice(0, extensionIndex) : uniqueName;
-      const extension = extensionIndex !== -1 ? uniqueName.slice(extensionIndex) : '';
-  
-      while (items.some(item => item.name === uniqueName)) {
-          uniqueName = `${baseName}(${counter})${extension}`;
-          counter++;
-      }
-  
-      return uniqueName;
-    };
+    
   
     const deleteItems = async () => {
       if (!selectedItems || selectedItems.length === 0) return;
@@ -100,7 +83,7 @@ const SelectedBar = (
     const pasteFileOrFolder = async (item: any) => {
       const date = new Date();
       const unixTimestampInSeconds = Math.floor(date.getTime() / 1000);
-      const uniqueName = createUniqueName(item.name);
+      const uniqueName = createUniqueName(item.name,items);
       const payload = {
           name: uniqueName,
           parentFolderId: parentFolderId ?? null,
@@ -174,45 +157,13 @@ const SelectedBar = (
       }
       
       if(selectedItems){
-        setEditingFolderId(selectedItems[0])
+        setEditingItemId(selectedItems[0])
         const folderName = items.filter((item) => selectedItems?.includes(item.id))[0].name
-        setEditingFolderName(folderName)
+        setEditingItemName(folderName)
       }
     }
 
-    const handleRenameKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>, itemId: string, itemName: string, itemType: string) => {
-      if (e.key === 'Enter') {
-        e.preventDefault()
-        if(editingFolderName.length === 0){
-          toaster("rename",'',true)
-          return
-        }
-        const uniqueName = createUniqueName(editingFolderName)
-        setItems(items.map(item =>
-          item.id === itemId ? { ...item, name: uniqueName } : item
-        ))
-        setEditingFolderId(null)
-        toaster("rename",itemId,false)
-  
-        try {
-          const linkType = itemType === "folder" ? "folder" : "file";
-          const endpoint = `${BASE_URL}/api/v1/${linkType}/${itemId}`;
-          await axios.put(endpoint, { name : uniqueName }, {
-            headers: {
-              "Content-type": "application/json",
-              "Authorization": `Bearer ${localStorage.getItem("token")}`
-            }
-          });
     
-        } catch (error) {
-          console.log(error);
-          // Rollback favorite status in case of an error
-          setItems(items.map(item =>
-            item.id === itemId ? { ...item, name: itemName } : item
-          ))
-        }
-      }
-    }
   
   return (
     <div>
@@ -238,4 +189,4 @@ const SelectedBar = (
   )
 };
 
-export default SelectedBar;
+export default ActionBar;

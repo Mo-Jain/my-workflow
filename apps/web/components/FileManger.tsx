@@ -35,20 +35,36 @@ import { useRecoilState, useSetRecoilState } from "recoil";
 import { Input } from "./ui/input";
 import { copyItemState } from "@/lib/store/atoms/copyItem";
 
+export const createUniqueName = (name: string,items:any[]) => {
+  let uniqueName = name;
+  let counter = 1;
+
+  const extensionIndex = uniqueName.lastIndexOf('.');
+  const baseName = extensionIndex !== -1 ? uniqueName.slice(0, extensionIndex) : uniqueName;
+  const extension = extensionIndex !== -1 ? uniqueName.slice(extensionIndex) : '';
+
+  while (items.some(item => item.name === uniqueName)) {
+      uniqueName = `${baseName}(${counter})${extension}`;
+      counter++;
+  }
+
+  return uniqueName;
+};
+
 interface FileManagerProps {
   headers: string[];
   items: any[]; // Define items more specifically if possible
   setItems: React.Dispatch<React.SetStateAction<any[]>>; // Update the type here
   hasFavorite: boolean;
-  parentFolderId?: string;
-  copiedItems?: any;
-  setCopiedItems?: React.Dispatch<React.SetStateAction<any>>;
   toggleAll?: (checked: boolean) => void;
   toggleItem?: (itemId: string,checked: boolean) => void;
   selectedItems?: string[];
   setSelectedItems?: React.Dispatch<React.SetStateAction<string[]>>;
-  iconSize?: string;
   iconStyle?: string;
+  editingItemId?:string | null;
+  setEditingItemId? : React.Dispatch<React.SetStateAction<string | null>>;
+  editingItemName?: string;
+  setEditingItemName?: React.Dispatch<React.SetStateAction<string>>;
 }
 
 export default function FileManager({
@@ -56,14 +72,15 @@ export default function FileManager({
   items,
   setItems,
   hasFavorite,
-  parentFolderId,
-  copiedItems,
-  setCopiedItems,
   toggleAll,
   toggleItem,
   selectedItems,
   setSelectedItems,
   iconStyle,
+  editingItemId,
+  setEditingItemId,
+  editingItemName,
+  setEditingItemName
   }: FileManagerProps) {
   const [sortConfig, setSortConfig] = useState<{
     key: string;
@@ -72,9 +89,6 @@ export default function FileManager({
    // Memoize the items mapped to their IDs
   const router = useRouter();
   const setFavorite = useSetRecoilState(favoritesState);
-  const [editingFolderId, setEditingFolderId] = useState<string | null>(null)
-  const [editingFolderName, setEditingFolderName] = useState('')
-  const [copiedItem, setCopiedItem] = useRecoilState(copyItemState);
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -156,146 +170,26 @@ export default function FileManager({
     }
   };
 
-  const createUniqueName = (name: string) => {
-    let uniqueName = name;
-    let counter = 1;
-
-    const extensionIndex = uniqueName.lastIndexOf('.');
-    const baseName = extensionIndex !== -1 ? uniqueName.slice(0, extensionIndex) : uniqueName;
-    const extension = extensionIndex !== -1 ? uniqueName.slice(extensionIndex) : '';
-
-    while (items.some(item => item.name === uniqueName)) {
-        uniqueName = `${baseName}(${counter})${extension}`;
-        counter++;
-    }
-
-    return uniqueName;
-  };
-
-  const deleteItems = async () => {
-    if (!selectedItems || selectedItems.length === 0) return;
-    const itemsToDelete = items.filter((item) => selectedItems.includes(item.id))
-    setSelectedItems && setSelectedItems([]);
-    for (const item of itemsToDelete) {
-      try {
-        if(item.type === "folder") {  
-          await axios.delete(`${BASE_URL}/api/v1/folder/${item.id}`, {
-            headers: {
-              "Content-type": "application/json",
-              "Authorization": `Bearer ${localStorage.getItem("token")}`
-            }
-          });
-        }
-        else{
-          await axios.delete(`${BASE_URL}/api/v1/file/${item.id}`, {
-            headers: {
-              "Content-type": "application/json",
-              "Authorization": `Bearer ${localStorage.getItem("token")}`
-            }
-          });
-        }
-        setItems(prevItems => prevItems.filter(file => file.id !== item.id));
-        toaster("delete", item.id, false);
-      } catch (e) {
-        toaster("delete", item.id, true);
-      }
-    }
-  }
-
-  const pasteFileOrFolder = async (item: any) => {
-    const date = new Date();
-    const unixTimestampInSeconds = Math.floor(date.getTime() / 1000);
-    const uniqueName = createUniqueName(item.name);
-    const payload = {
-        name: uniqueName,
-        parentFolderId: parentFolderId ?? null,
-        size: item.size,
-        type: item.type,
-        modifiedAt: unixTimestampInSeconds,
-    };
-
-    try {
-        if (item.type === "folder") {
-            const res = await axios.post(`${BASE_URL}/api/v1/folder`, {
-                name: uniqueName,
-                parentFolderId: payload.parentFolderId,
-            }, {
-                headers: {
-                    "Content-type": "application/json",
-                    "Authorization": `Bearer ${localStorage.getItem("token")}`
-                }
-            });
-
-            setItems(prevItems => [
-                ...prevItems,
-                { id: res.data.id, name: uniqueName, items: "0", type: "folder", modifiedAt: date.toISOString(), isFavorite: false }
-            ]);
-        } else {
-            const res = await axios.post(`${BASE_URL}/api/v1/file`, payload, {
-                headers: {
-                    "Content-type": "application/json",
-                    "Authorization": `Bearer ${localStorage.getItem("token")}`
-                }
-            });
-
-            setItems(prevItems => [
-              ...prevItems,
-                { id: res.data.id, name: uniqueName, size: item.size, type: item.type, modifiedAt: date.toISOString(), isFavorite: false }
-            ]);
-        }
-        toaster("paste", item.id, false);
-    } catch (e) {
-        toaster("paste", item.id, true);
-    }
-  };
-
-  const pasteItems = async () => {
-    if (!copiedItem || copiedItem.length === 0) return;
-    // Process each copied folder or file
-    for (const item of copiedItem) {
-        await pasteFileOrFolder(item);
-    }
-    setSelectedItems && setSelectedItems([]);
-  };
-
-  const copySelectedItems = () => {
-    const itemsToCopy = items.filter((item) => selectedItems?.includes(item.id))
-    setCopiedItem && setCopiedItem(itemsToCopy)
-    // console.log(copiedItem);
-    toaster('copie','',false);
-  }
-
   const handleDoubleClick = (id:string,type:string) => {
     if(type === "folder"){
       router.push(`/node/${id}`)
     }
   }
-
   
-  const handleRenameClick = () => {
-    if( selectedItems && selectedItems.length > 1){
-      toaster("rename more than one",'',true)
-      return
-    }
-    if(selectedItems){
-      setEditingFolderId(selectedItems[0])
-      const folderName = items.find(item => item.id === selectedItems[0]).name
-      setEditingFolderName(folderName)
-    }
-  }
-
+  
   const handleRenameKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>, itemId: string, itemName: string, itemType: string) => {
     if (e.key === 'Enter') {
       e.preventDefault()
-      if(editingFolderName.length === 0){
+      if(!editingItemName || !setEditingItemId ) return;
+      if(editingItemName.length === 0){
         toaster("rename",'',true)
         return
       }
-      const uniqueName = createUniqueName(editingFolderName)
+      const uniqueName = createUniqueName(editingItemName,items)
       setItems(items.map(item =>
         item.id === itemId ? { ...item, name: uniqueName } : item
       ))
-      setEditingFolderId(null)
+      setEditingItemId(null)
       toaster("rename",itemId,false)
 
       try {
@@ -319,29 +213,11 @@ export default function FileManager({
   }
 
 
+  
     return (
     <div>
       <div className="w-full">
-        {copiedItems && setCopiedItems && selectedItems &&(
-        <div className="flex justify-end space-x-2 items-center py-2 bg-white text-black">
-            <Button onClick={copySelectedItems} disabled={selectedItems.length === 0} className="bg-white text-black hover:bg-gray-300">
-              <Copy className="h-4 w-4" />
-              Copy
-            </Button>
-            <Button onClick={pasteItems} disabled={copiedItem.length === 0} className="bg-white text-black hover:bg-gray-300">
-              <Clipboard className=" h-4 w-4" />
-              Paste
-            </Button>
-            <Button onClick={deleteItems} disabled={selectedItems.length === 0} className="bg-white text-black hover:bg-gray-300">
-              <Trash className=" h-4 w-4" />
-              Delete
-            </Button>
-            <Button onClick={handleRenameClick} disabled={selectedItems.length === 0} className="bg-white text-black hover:bg-gray-300">
-              <Edit2 className=" h-4 w-4" />
-              Rename
-            </Button>
-        </div>
-        )}
+        
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <Table>
             <TableHeader className="bg-gray-100">
@@ -396,12 +272,12 @@ export default function FileManager({
                             {index === 0 ? (
                               <div className="flex gap-2 items-center">
                               <div >{getFileIcon(type,iconStyle)}</div>
-                                {editingFolderId === item.id ? (
+                                {editingItemId === item.id && setEditingItemName && setEditingItemId ? (
                                   <Input
-                                    value={editingFolderName}
-                                    onChange={(e) => setEditingFolderName(e.target.value)}
+                                    value={editingItemName}
+                                    onChange={(e) => setEditingItemName(e.target.value)}
                                     onKeyDown={(e) => handleRenameKeyDown(e, item.id, item.name, item.type)}  
-                                    onBlur={() => setEditingFolderId(null)}
+                                    onBlur={() => setEditingItemId(null)}
                                     autoFocus
                                   />
                                   ) : (

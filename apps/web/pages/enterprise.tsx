@@ -7,13 +7,16 @@ import GridLayout from "@/components/Gridlayout"
 import Header from "@/components/Header"
 import axios from "axios"
 import { BASE_URL } from "@/next.config"
+import ActionBar from "@/components/ActionBar"
 
 
 interface Folder {
   id: string,
   name: string,
-  items: string,
-  modified: string,
+  type: string,
+  items?: string,
+  size?: string,
+  modifiedAt: string | Date,
   isFavorite: boolean
 }
 
@@ -67,7 +70,9 @@ export default function Enterprise() {
   const [viewType, setViewType] = useState<'list' | 'grid'>('list');
   const [folders, setFolders] = useState<Folder[]>([]);
   const [newFolderName, setNewFolderName] = useState('new folder');
-  const [workspaceId,setWorkspaceId] = useState("")
+  const [workspaceId,setWorkspaceId] = useState("");
+  const [editingItemId, setEditingItemId] = useState<string | null>(null)
+  const [editingItemName, setEditingItemName] = useState('')
 
 
   const toggleAll = (checked: boolean) => {
@@ -133,6 +138,15 @@ export default function Enterprise() {
         setItems={setFolders}
         parentFolderId={workspaceId}
       />
+      <ActionBar
+        items={folders}
+        setItems={setFolders}
+        selectedItems={selectedFolders}
+        setSelectedItems={setSelectedFolders}
+        parentFolderId={workspaceId}
+        setEditingItemId={setEditingItemId}
+        setEditingItemName={setEditingItemName}
+        />
       <div>
         {viewType === 'list' ? (
             <>
@@ -144,6 +158,11 @@ export default function Enterprise() {
                 toggleAll={toggleAll}
                 toggleItem={toggleFolder}
                 selectedItems={selectedFolders}
+                setSelectedItems={setSelectedFolders}
+                editingItemId={editingItemId}
+                setEditingItemId={setEditingItemId}
+                editingItemName={editingItemName}
+                setEditingItemName={setEditingItemName}
               />
             </>
         ) : (

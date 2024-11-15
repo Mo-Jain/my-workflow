@@ -17,6 +17,7 @@ import GridLayout from "@/components/Gridlayout"
 import axios from "axios"
 import { BASE_URL } from "@/next.config"
 import Header from "@/components/Header"
+import ActionBar from "@/components/ActionBar"
 
 // Sample data - in a real app this would come from your backend
 const filesList = [
@@ -67,15 +68,16 @@ interface File {
   type: string,
   items?: string,
   size?: string,
-  modified: string,
+  modifiedAt: string,
   isFavorite: boolean
 }
 export default function UserGuides() {
   const [selectedFiles, setSelectedFiles] = useState<string[]>([])
   const [viewType, setViewType] = useState<'list' | 'grid'>('list')
-  const [files, setFiles] = useState<File[]>(filesList);
+  const [files, setFiles] = useState<File[]>([]);
   const [newFolderName, setNewFolderName] = useState<string>("");
-  const [copiedFolders, setCopiedFolders] = useState<File[]>([])
+  const [editingItemId, setEditingItemId] = useState<string | null>(null)
+  const [editingItemName, setEditingItemName] = useState('')
 
 
   useEffect(() => {
@@ -145,6 +147,15 @@ export default function UserGuides() {
         setItems={setFiles}
         parentFolderId={"2be1f5f1-e756-489f-a0ca-221dd8df89a0"}
       />
+      <ActionBar
+        items={files}
+        setItems={setFiles}
+        selectedItems={selectedFiles}
+        setSelectedItems={setSelectedFiles}
+        parentFolderId={"2be1f5f1-e756-489f-a0ca-221dd8df89a0"}
+        setEditingItemId={setEditingItemId}
+        setEditingItemName={setEditingItemName}
+        />
       <div >
       <div>
         {viewType === 'list' ? (
@@ -154,13 +165,14 @@ export default function UserGuides() {
               items={files}
               setItems={setFiles}
               hasFavorite={true}
-              parentFolderId={"2be1f5f1-e756-489f-a0ca-221dd8df89a0"}
-              copiedItems={copiedFolders}
-              setCopiedItems={setCopiedFolders}
               toggleItem={toggleFile}
               toggleAll={toggleAll}
               selectedItems={selectedFiles}
               setSelectedItems={setSelectedFiles}
+              editingItemId={editingItemId}
+              setEditingItemId={setEditingItemId}
+              editingItemName={editingItemName}
+              setEditingItemName={setEditingItemName}
               />
           </>
         ) : (

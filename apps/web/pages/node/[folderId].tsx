@@ -12,6 +12,7 @@ import { getFileIcon } from "../icon/icon";
 import Header from "@/components/Header";
 import axios from "axios";
 import { BASE_URL } from "@/next.config";
+import ActionBar from "@/components/ActionBar";
 
 const filesList = [
     
@@ -31,7 +32,7 @@ const filesList = [
     type: string,
     items?: string,
     size?: string,
-    modified: string,
+    modifiedAt: string,
     isFavorite: boolean
   }
 
@@ -40,8 +41,9 @@ const folderId = () => {
   const [viewType, setViewType] = useState<'list' | 'grid'>('list')
   const [files, setFiles] = useState<File[]>([]);
   const [newFolderName, setNewFolderName] = useState('new folder')
-  const [copiedFolders, setCopiedFolders] = useState<File[]>([])
   const folderId  = useParams();
+  const [editingItemId, setEditingItemId] = useState<string | null>(null)
+  const [editingItemName, setEditingItemName] = useState('')
 
 
   const toggleAll = (checked: boolean) => {
@@ -105,7 +107,15 @@ const folderId = () => {
         setItems={setFiles}
         parentFolderId={folderId?.folderId as string}
       />
-
+      <ActionBar
+        items={files}
+        setItems={setFiles}
+        selectedItems={selectedFiles}
+        setSelectedItems={setSelectedFiles}
+        parentFolderId={folderId?.folderId as string}
+        setEditingItemId={setEditingItemId}
+        setEditingItemName={setEditingItemName}
+        />
       <div>
         {viewType === 'list' ? (
           <FileManager
@@ -113,13 +123,14 @@ const folderId = () => {
             items={files}
             setItems={setFiles}
             hasFavorite={true}
-            parentFolderId={folderId?.folderId as string}
-            copiedItems={copiedFolders}
-            setCopiedItems={setCopiedFolders}
             toggleItem={toggleFile}
             toggleAll={toggleAll}
             selectedItems={selectedFiles}
             setSelectedItems={setSelectedFiles}
+            editingItemId={editingItemId}
+            setEditingItemId={setEditingItemId}
+            editingItemName={editingItemName}
+            setEditingItemName={setEditingItemName}
           />
           
         ) : (
