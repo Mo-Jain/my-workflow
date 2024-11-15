@@ -226,7 +226,7 @@ export default function Home() {
                         }}
                         aria-label={item.isFavorite ? "Remove from favorites" : "Add to favorites"}
                       >
-                        <Star className={item.isFavorite ? "fill-yellow-400" : "fill-none"} />
+                        {getFileIcon('star',`${item.isFavorite ? "fill-yellow-400" : "fill-none"}`)}
                       </Button>
                   </div>
                 ))}

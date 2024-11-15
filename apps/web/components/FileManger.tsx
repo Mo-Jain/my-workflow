@@ -425,8 +425,8 @@ export default function FileManager({
                         }}
                         aria-label={item.isFavorite ? "Remove from favorites" : "Add to favorites"}
                       >
-                        <Star className={item.isFavorite ? "fill-yellow-400" : "fill-none"} />
-                      </Button>}
+                        {getFileIcon('star',`${item.isFavorite ? "fill-yellow-400" : "fill-none"}`)}
+                        </Button>}
                       </div>
                     </TableCell>
                   </SortableItem>
