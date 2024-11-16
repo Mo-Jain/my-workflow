@@ -17,7 +17,7 @@ export function SortableItem(props: any) {
     }
     
     return (
-      <TableRow ref={setNodeRef} style={style} onDoubleClick={props.onDoubleClick} {...attributes} {...listeners}>
+      <TableRow ref={setNodeRef} style={style} onClick={props.onClick} onDoubleClick={props.onDoubleClick} {...attributes} {...listeners}>
         {props.children}
       </TableRow>
     )

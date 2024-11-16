@@ -15,10 +15,8 @@ import { recentlyViewedItems } from "@/lib/store/selectors/recentlyViewedSelecto
 import { workflowItems } from "@/lib/store/selectors/workflow"
 import { assignmentItems } from "@/lib/store/selectors/assignment"
 import FavoriteIcon from "@/components/FavoriteIcon"
-import WorkflowCard from "@/components/cardsworkflow"
-import { Doughnut } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import Cardsworkflow from "@/components/cardsworkflow"
+import Cardsworkflow from "@/components/Cardsworkflow"
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 

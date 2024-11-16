@@ -14,6 +14,7 @@ import { getIcon } from "@/pages/icon/icon"
 import { useRouter } from "next/navigation"
 import { workflowItems } from "@/lib/store/selectors/workflow"
 import { useRecoilValue } from "recoil"
+import WorkflowPopup from "./WorkflowPopup"
 
 // Sample data - in a real app this would come from your backend
 const workflowsListnotused = [
@@ -56,11 +57,26 @@ export default function Component(
   {onClose:()=>void}
 ) {
   const [workflowsList, setWorkflowsList] = useState<Workflow[]>([]);
+  const [workflowVisible, setWorkflowVisible] = useState(false);
   const router = useRouter();
   const workflows = useRecoilValue(workflowItems);
   
   return (
     <div className=" bg-background text-black">
+      {workflowVisible && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center">
+          {/* Translucent overlay */}
+          <div
+            className="fixed inset-0 bg-black opacity-50 z-30"
+          />
+          
+          {/* Popup content */}
+          <div className="relative z-40 bg-white rounded-lg shadow-lg w-max h-[85vh] overflow-y-auto  ">
+            <WorkflowPopup />
+          </div>
+        </div>
+      )}
+     
       <div className="p-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -78,6 +94,7 @@ export default function Component(
           setItems={setWorkflowsList}
           hasFavorite={false}
           iconStyle="h-4 w-4"
+          onClickEvent={()=>setWorkflowVisible(true)}
         />
       </div>
     </div>

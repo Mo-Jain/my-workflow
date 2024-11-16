@@ -1,5 +1,5 @@
 'use client'
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Doughnut } from 'react-chartjs-2'
@@ -10,49 +10,35 @@ import { useRecoilValue } from 'recoil'
 ChartJS.register(ArcElement, Tooltip, Legend)
 
 interface WorkflowCardProps {
-  onTime?: number
-  stopped?: number,
   setWorkflowVisible: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-const workflows =[
-    {
-        "id": "ba604056-5af7-4945-8af8-7ecb24d5a96a",
-        "status": "on time",
-        "dueDate": null,
-        "workflowName": "30079647 - NFA WF - 10/Sep/2024 03:16",
-        "currentStep": "NFA Form - 10/Sep/2024 03:16 PM",
-        "assignedTo": "Mohit Jain",
-        "startDate": "2024-11-15T11:47:55.239Z"
-    },
-    {
-        "id": "ba074564-e84d-423b-84e0-7cd787d897f9",
-        "status": "on time",
-        "dueDate": null,
-        "workflowName": "30079647 - NFA WF - 10/Sep/2024 03:16",
-        "currentStep": "NFA WF - 10/Sep/2024 03:16",
-        "assignedTo": "Mohit Jain",
-        "startDate": "2024-11-15T14:33:10.774Z"
-    }
-]
 
-
-
-export default function Cardsworkflow({ onTime=1, stopped=1,setWorkflowVisible }: WorkflowCardProps) {
-  const total = onTime + stopped
-  const workflows = useRecoilValue(workflowItems);
+export default function Cardsworkflow({ setWorkflowVisible }: WorkflowCardProps) {
   
-  const data = {
-    labels: ['On time', 'Stopped'],
-    datasets: [
-      {
-        data: [onTime, stopped],
-        backgroundColor: ['#3b82f6', '#ef4444'],
-        borderColor: ['#3b82f6', '#ef4444'],
-        borderWidth: 1,
-      },
-    ],
-  }
+  const workflows = useRecoilValue(workflowItems);
+
+  const onTimeCount = workflows.filter(
+    (workflow) => workflow.status === 'on time'
+  ).length;
+  const stoppedCount = workflows.filter(
+    (workflow) => workflow.status === 'stopped'
+  ).length;
+
+  const chartData = useMemo(() => {
+
+    return {
+      labels: ['On time', 'Stopped'],
+      datasets: [
+        {
+          data: [onTimeCount, stoppedCount],
+          backgroundColor: ['#3b82f6', '#ef4444'],
+          borderColor: ['#3b82f6', '#ef4444'],
+          borderWidth: 1,
+        },
+      ],
+    };
+  }, [workflows]);
 
   const options = {
     cutout: '70%',
@@ -81,18 +67,24 @@ export default function Cardsworkflow({ onTime=1, stopped=1,setWorkflowVisible }
                 <div className="flex h-full w-full items-center justify-center gap-2">
                 <div className=" h-36 w-36 rounded-full cursor-default">
                     <div className=" relative rounded-full">
-                    <Doughnut data={data} options={options} className="cursor-pointer" />
-                    <div className="absolute inset-0 flex  items-center justify-center rounded-full ">
-                        <div className="text-center">
-                        <div className="text-2xl font-bold">{workflows.length}</div>
-                        <div className="text-xs text-muted-foreground">Total</div>
-                        </div>
-                    </div>
+                    <Doughnut data={chartData} options={options} className="cursor-pointer" />
+                      <div className="absolute inset-0 flex  items-center justify-center rounded-full ">
+                          <div className="text-center cursor-pointer">
+                            <div className="text-2xl font-bold">{workflows.length}</div>
+                            <div className="text-xs text-muted-foreground">Total</div>
+                          </div>
+                      </div>
                     </div>
                 </div>
-                <div className=" flex justify-center mr-8 ml-8 items-center text-sm text-gray-300 gap-2">
-                    <span className="text-lg text-blue-300 cursor-pointer">{workflows.length}</span>
-                    <span className="text-xs cursor-pointer" onClick={()=> setWorkflowVisible(true)}>On time</span>
+                <div>
+                  {onTimeCount > 0 && <div className=" flex justify-center mr-8 ml-8 items-center text-sm text-gray-300 gap-2">
+                      <span className="text-lg text-blue-300 cursor-pointer">{onTimeCount}</span>
+                      <span className="text-xs cursor-pointer" onClick={()=> setWorkflowVisible(true)}>On time</span>
+                  </div>}
+                  {stoppedCount > 0 && <div className=" flex justify-center mr-8 ml-8 items-center text-sm text-gray-300 gap-2">
+                      <span className="text-lg text-red-600 cursor-pointer">{stoppedCount}</span>
+                      <span className="text-xs cursor-pointer" onClick={()=> setWorkflowVisible(true)}>Stopped</span>
+                  </div>}
                 </div>
                 </div>
                 :

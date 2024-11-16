@@ -30,9 +30,11 @@ export function getIcon(type: string, style:string="h-5") {
       case 'clock' :
         return <Clock className={`${style}`} />
       case 'on time':
-        return <Clock className={`${style} text-blue-800 scale-x-[-1] fill-blue-300`} />
+        return <Clock className={`${style} text-blue-800 rounded-full scale-x-[-1] fill-blue-300`} />
       case 'stopped':
-        return <StopCircle className={`${style} text-white fill-red-500`} />
+        return <div className={` ${style} rounded-full bg-red-500 flex items-center justify-center`}>
+                  <div className="absolute inset-2.3 rounded-[4px] h-[53%] w-[53%] bg-white" />
+                </div>
       default:
         return <FileText strokeWidth={1} className={`${style} text-gray-950 fill-gray-400`} />
     }

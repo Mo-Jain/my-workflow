@@ -68,6 +68,7 @@ interface FileManagerProps {
   setEditingItemId? : React.Dispatch<React.SetStateAction<string | null>>;
   editingItemName?: string;
   setEditingItemName?: React.Dispatch<React.SetStateAction<string>>;
+  onClickEvent?:()=>void;
 }
 
 export default function FileManager({
@@ -82,7 +83,8 @@ export default function FileManager({
   editingItemId,
   setEditingItemId,
   editingItemName,
-  setEditingItemName
+  setEditingItemName,
+  onClickEvent
   }: FileManagerProps) {
   const [sortConfig, setSortConfig] = useState<{
     key: string;
@@ -139,6 +141,11 @@ export default function FileManager({
     if(type === "folder"){
       router.push(`/node/${id}`)
     }
+  }
+  const handleClick = (e:any) => {
+    e.stopPropagation()
+    console.log("clicked");
+    // if(onClickEvent) onClickEvent()
   }
   
   
@@ -219,7 +226,7 @@ export default function FileManager({
                 { items.map((item:any) => {
                 const type = item.type;
                 return(
-                  <SortableItem key={item.id} id={item.id} onDoubleClick={() => handleDoubleClick(item.id,item.type)}>
+                  <SortableItem key={item.id} id={item.id} onClick={handleClick} onDoubleClick={() => handleDoubleClick(item.id,item.type)}>
                     {selectedItems && toggleItem &&  (
                       <TableCell>
                         <Checkbox
