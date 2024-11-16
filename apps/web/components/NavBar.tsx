@@ -56,14 +56,15 @@ const Header = () => {
           }
         </div>
 
-        <div className={`flex items-center gap-2 transition-opacity duration-300 ${isSearchVisible ? 'opacity-0' : 'opacity-100'}`}>
+        <div className={`flex items-center gap-1 transition-opacity duration-300 ${isSearchVisible ? 'opacity-0' : 'opacity-100'}`}>
           <Image 
             src={logo} 
             width={100}
             height={70}
             alt="Adani Natural Resources" 
           />
-          <span className="text-gray-600 text-sm">Natural Resources</span>
+          <div className="h-10 border-[1px] border-gray-600 mr-2"></div>
+          <span className="text-gray-600 text-sm text-wrap w-6 text-center">Natural Resources</span>
         </div>
 
         <div className="flex items-center gap-2">

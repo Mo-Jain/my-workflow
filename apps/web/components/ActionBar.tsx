@@ -83,7 +83,7 @@ const ActionBar = (
     const pasteFileOrFolder = async (item: any) => {
       const date = new Date();
       const unixTimestampInSeconds = Math.floor(date.getTime() / 1000);
-      const uniqueName = createUniqueName(item.name,items);
+      const {uniqueName,type} = createUniqueName(item.name,items);
       const payload = {
           name: uniqueName,
           parentFolderId: parentFolderId ?? null,
@@ -109,6 +109,8 @@ const ActionBar = (
                   { id: res.data.id, name: uniqueName, items: "0", type: "folder", modifiedAt: date.toISOString(), isFavorite: false }
               ]);
           } else {
+              console.log("inside else",payload); 
+              payload.name = uniqueName;
               const res = await axios.post(`${BASE_URL}/api/v1/file`, payload, {
                   headers: {
                       "Content-type": "application/json",

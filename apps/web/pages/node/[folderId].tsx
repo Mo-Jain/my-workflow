@@ -8,7 +8,7 @@ import { useState, useRef, useCallback } from "react"
 import FileManager from "@/components/FileManger"
 import GridLayout from "@/components/Gridlayout"
 import { toast } from "@/hooks/use-toast"
-import { getFileIcon } from "../icon/icon";
+import { getIcon } from "../icon/icon";
 import Header from "@/components/Header";
 import axios from "axios";
 import { BASE_URL } from "@/next.config";

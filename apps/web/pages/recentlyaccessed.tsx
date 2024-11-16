@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { useRouter } from "next/router"
 import {  useCallback, useEffect, useState } from "react"
 import FileManager from "@/components/FileManger"
-import {getFileIcon} from "./icon/icon"
+import {getIcon} from "./icon/icon"
 import { useRecoilValue } from "recoil"
 import { recentlyViewedItems } from "@/lib/store/selectors/recentlyViewedSelectors"
 
@@ -95,7 +95,6 @@ export default function RecentlyAccessed() {
         toggleItem={toggleItem}
         selectedItems={selectedFiles}
         hasFavorite={true}
-        setSelectedItems={setSelectedFiles}
        />
 
       

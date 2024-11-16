@@ -1,12 +1,12 @@
 import React from "react"
-import { Badge, ChevronDown, Folder, LayoutGrid, LayoutList, Search, Star } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { ChevronDown } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
-import { getFileThumbnail } from "@/pages/icon/icon"
+import { getIcon } from "@/pages/icon/icon"
 import { Card, CardContent } from "./ui/card"
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { SortableItem } from "./Sortable";
+import FavoriteIcon from "./FavoriteIcon"
 
 const GridLayout = ({ items, setItems, selectedItems, toggleItem, toggleAll }:
     { 
@@ -64,7 +64,7 @@ const GridLayout = ({ items, setItems, selectedItems, toggleItem, toggleAll }:
                       />
                     </div>
                     <div className="flex flex-col items-center">
-                      {getFileThumbnail(item.type)}
+                      {getIcon(item.type,'h-20 w-20')}
                       <div className="mt-2 text-center">
                         <div className="text-sm font-medium truncate max-w-[150px]">{item.name}</div>
                         <div className="text-xs text-muted-foreground mt-1">
@@ -73,13 +73,7 @@ const GridLayout = ({ items, setItems, selectedItems, toggleItem, toggleAll }:
                       </div>
                     </div>
                     <div className={`absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity ${item.isFavorite?'opacity-100':'opacity-0'}`}>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                      >
-                        <Star className={`h-4 w-4 ${item.isFavorite ? 'fill-yellow-400 text-yellow-400' : ''}`} />
-                      </Button>
+                      <FavoriteIcon item={item} items={items} setItems={setItems}/>
                     </div>
                   </CardContent>
                 </Card>

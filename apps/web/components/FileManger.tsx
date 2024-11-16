@@ -29,11 +29,13 @@ import axios from "axios";
 import { BASE_URL } from "@/next.config";
 import { toaster } from "@/pages/admin";
 import { useRouter } from "next/router";
-import { getFileIcon } from "@/pages/icon/icon";
+import { getIcon } from "@/pages/icon/icon";
 import { favoritesState } from "@/lib/store/atoms/favorites";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import { Input } from "./ui/input";
 import { copyItemState } from "@/lib/store/atoms/copyItem";
+import FavoriteIcon from "./FavoriteIcon";
+import e from "express";
 
 export const createUniqueName = (name: string,items:any[]) => {
   let uniqueName = name;
@@ -48,7 +50,9 @@ export const createUniqueName = (name: string,items:any[]) => {
       counter++;
   }
 
-  return uniqueName;
+  const type  = extension.slice(1);
+
+  return {uniqueName,type};
 };
 
 interface FileManagerProps {
@@ -59,7 +63,6 @@ interface FileManagerProps {
   toggleAll?: (checked: boolean) => void;
   toggleItem?: (itemId: string,checked: boolean) => void;
   selectedItems?: string[];
-  setSelectedItems?: React.Dispatch<React.SetStateAction<string[]>>;
   iconStyle?: string;
   editingItemId?:string | null;
   setEditingItemId? : React.Dispatch<React.SetStateAction<string | null>>;
@@ -75,7 +78,6 @@ export default function FileManager({
   toggleAll,
   toggleItem,
   selectedItems,
-  setSelectedItems,
   iconStyle,
   editingItemId,
   setEditingItemId,
@@ -132,43 +134,6 @@ export default function FileManager({
   };
   
 
-  const toggleFavoriteItem = async (itemId: string) => {
-    const item = items.find(item => item.id === itemId);
-    if (!item) return;
-
-    const { isFavorite, type, name, parentFolderName } = item;
-    const updatedFavoriteStatus = !isFavorite;
-    
-    // Optimistically update the item in state
-    setItems(items.map(i => i.id === itemId ? { ...i, isFavorite: updatedFavoriteStatus } : i));
-
-    // Helper to update favorite state
-    const updateFavoriteState = (isFavorite: boolean) => {
-      setFavorite(prevFavorites => ({
-        ...prevFavorites,
-        favorites: isFavorite
-          ? [...prevFavorites.favorites, { id: itemId, name, type, location: parentFolderName, isFavorite: updatedFavoriteStatus }]
-          : prevFavorites.favorites.filter(fav => fav.id !== itemId)
-      }));
-    };
-
-    try {
-      const linkType = type === "folder" ? "folder" : "file";
-      const endpoint = `${BASE_URL}/api/v1/${linkType}/${itemId}`;
-      await axios.put(endpoint, { name, isFavorite: updatedFavoriteStatus }, {
-        headers: {
-          "Content-type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        }
-      });
-
-      updateFavoriteState(!isFavorite); // Update favorite state based on new favorite status
-    } catch (error) {
-      console.log(error);
-      // Rollback favorite status in case of an error
-      setItems(items.map(i => i.id === itemId ? { ...i, isFavorite } : i));
-    }
-  };
 
   const handleDoubleClick = (id:string,type:string) => {
     if(type === "folder"){
@@ -185,7 +150,7 @@ export default function FileManager({
         toaster("rename",'',true)
         return
       }
-      const uniqueName = createUniqueName(editingItemName,items)
+      const {uniqueName,type} = createUniqueName(editingItemName,items)
       setItems(items.map(item =>
         item.id === itemId ? { ...item, name: uniqueName } : item
       ))
@@ -195,7 +160,7 @@ export default function FileManager({
       try {
         const linkType = itemType === "folder" ? "folder" : "file";
         const endpoint = `${BASE_URL}/api/v1/${linkType}/${itemId}`;
-        await axios.put(endpoint, { name : uniqueName }, {
+        await axios.put(endpoint, { name : uniqueName, type:type }, {
           headers: {
             "Content-type": "application/json",
             "Authorization": `Bearer ${localStorage.getItem("token")}`
@@ -222,7 +187,7 @@ export default function FileManager({
           <Table>
             <TableHeader className="bg-gray-100">
               <TableRow>
-                {selectedItems && toggleAll && setSelectedItems && (  
+                {selectedItems && toggleAll && (  
                   <TableCell className="w-12">
                     <Checkbox
                       checked={selectedItems.length === items.length}
@@ -251,11 +216,11 @@ export default function FileManager({
             <TableBody>
               <SortableContext items={items.map((item) => item.id)} 
               strategy={verticalListSortingStrategy}>
-                { items.map((item) => {
+                { items.map((item:any) => {
                 const type = item.type;
                 return(
                   <SortableItem key={item.id} id={item.id} onDoubleClick={() => handleDoubleClick(item.id,item.type)}>
-                    {selectedItems && toggleItem && setSelectedItems && (
+                    {selectedItems && toggleItem &&  (
                       <TableCell>
                         <Checkbox
                           onPointerDown={(e) => e.stopPropagation()}
@@ -271,7 +236,7 @@ export default function FileManager({
                           <div className="flex items-center gap-2">
                             {index === 0 ? (
                               <div className="flex gap-2 items-center">
-                              <div >{getFileIcon(type,iconStyle)}</div>
+                              <div >{getIcon(type,iconStyle)}</div>
                                 {editingItemId === item.id && setEditingItemName && setEditingItemId ? (
                                   <Input
                                     value={editingItemName}
@@ -292,17 +257,9 @@ export default function FileManager({
                       ))}
                     <TableCell>
                       <div>
-                      {hasFavorite && <Button
-                        variant="ghost"
-                        size="sm"
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={(e) =>{ 
-                          toggleFavoriteItem(item.id)
-                        }}
-                        aria-label={item.isFavorite ? "Remove from favorites" : "Add to favorites"}
-                      >
-                        {getFileIcon('star',`${item.isFavorite ? "fill-yellow-400" : "fill-none"}`)}
-                        </Button>}
+                      {hasFavorite && 
+                        <FavoriteIcon item={item} items={items} setItems={setItems}/>
+                      }
                       </div>
                     </TableCell>
                   </SortableItem>

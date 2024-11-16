@@ -7,14 +7,19 @@ import { FileText, Folder, Clock, Star, Workflow, CheckCircle2 } from "lucide-re
 import { useRouter } from 'next/router'
 import { useEffect, useState } from "react"
 import { useRecoilValue, useSetRecoilState } from "recoil"
-import { getFileIcon } from "./icon/icon"
+import { getIcon } from "./icon/icon"
 import { favoritesState } from "@/lib/store/atoms/favorites"
 import { BASE_URL } from "@/next.config"
 import axios from "axios"
 import { recentlyViewedItems } from "@/lib/store/selectors/recentlyViewedSelectors"
 import { workflowItems } from "@/lib/store/selectors/workflow"
 import { assignmentItems } from "@/lib/store/selectors/assignment"
+import FavoriteIcon from "@/components/FavoriteIcon"
+import WorkflowCard from "@/components/cardsworkflow"
+import { Doughnut } from "react-chartjs-2";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 
+ChartJS.register(ArcElement, Tooltip, Legend)
 
 export default function Home() {
   const [workflowVisible, setWorkflowVisible] = useState(false);
@@ -34,45 +39,46 @@ export default function Home() {
     
   }, [workflows]);
 
-  const toggleFavoriteItem = async (itemId: string) => {
-    const item = favorites.find(item => item.id === itemId);
-    if (!item) return;
-
-    const { isFavorite, type, name, location } = item;
-    const updatedFavoriteStatus = !isFavorite;
-    
-    // Helper to update favorite state
-    const updateFavoriteState = (isFavorite: boolean) => {
-      setFavorite(prevFavorites => ({
-        ...prevFavorites,
-        favorites: isFavorite
-          ? [...prevFavorites.favorites, { id: itemId, name, type, location, isFavorite: updatedFavoriteStatus }]
-          : prevFavorites.favorites.filter(fav => fav.id !== itemId)
-      }));
-    };
-
-    try {
-      const linkType = type === "folder" ? "folder" : "file";
-      const endpoint = `${BASE_URL}/api/v1/${linkType}/${itemId}`;
-      await axios.put(endpoint, { name, isFavorite: updatedFavoriteStatus }, {
-        headers: {
-          "Content-type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        }
-      });
-
-      updateFavoriteState(!isFavorite); // Update favorite state based on new favorite status
-    } catch (error) {
-      console.log(error);
-      
+  const getDate = (onTime:number,stopped:number) => {
+    const data = {
+      labels: ['On time', 'Stopped'],
+      datasets: [
+        {
+          data: [onTime, stopped],
+          backgroundColor: ['#3b82f6', '#ef4444'],
+          borderColor: ['#3b82f6', '#ef4444'],
+          borderWidth: 1,
+        },
+      ],
     }
-  };
+
+    return data;
+  }
+  
+
+  const options = {
+    cutout: '70%',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        enabled: false,
+      },
+    },
+  }
+
+  
 
   function handleDoubleClick(id:string,type:string) {
     if(type == "folder"){
       router.push(`/node/${id}`)
     }
   }
+
+  
 
   
 
@@ -101,7 +107,7 @@ export default function Home() {
         <div className="grid grid-cols-4 grid-rows-4 gap-3 h-[calc(100vh)]">
           <Card className="col-span-2 row-span-2 rounded-none">
             <CardHeader className="flex flex-row items-center gap-2 border-b h-1/6 cursor-pointer hover:bg-gray-100">
-              {getFileIcon('docx',"h-5 w-5 text-blue-500")}
+              {getIcon('docx',"h-5 w-5 text-blue-500")}
               <CardTitle className="text-sm font-medium">Documents and Versions Uploaded</CardTitle>
             </CardHeader>
             <CardContent className="h-[calc(100%-3rem)] bg-gray-100 flex items-center justify-center text-muted-foreground">
@@ -115,16 +121,20 @@ export default function Home() {
             <CardHeader 
               className="flex flex-row items-center gap-2 border-b h-1/6 cursor-pointer hover:bg-gray-100"
               onClick={()=>router.push('/myassignment')} >
-              {getFileIcon('check',"h-6 text-green-500 stroke-2")}
+              {getIcon('check',"h-8 w-8 text-white fill-green-500 stroke-2")}
               <CardTitle className="text-sm font-medium">My Assignments</CardTitle>
             </CardHeader>
             <CardContent className="h-[calc(100%-3rem)] bg-gray-100 flex flex-col items-center px-0 text-muted-foreground">
             {assignments.map((item) =>(
-              <div className="flex items-start gap-2 text-sm">
-                {getFileIcon('workflow',"h-6 w-6 fill-green-400")}
+              <div className="flex items-start w-full items-center gap-2 text-sm py-1 px-1">
+                {getIcon('workflow',"h-6 w-6 fill-green-400 shrink-0 ")}
                 <div className="border-b">
-                  <div className="text-black">{item.name}</div>
-                  <div className="text-xs text-muted-foreground">{item.location}</div>
+                  <div className="text-black max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap">
+                    {item.name}
+                  </div>
+                  <div className="text-xs max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap py-1">
+                      {item.location}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                 </div>
@@ -139,19 +149,22 @@ export default function Home() {
             <CardHeader 
               className="flex flex-row items-center gap-2 border-b h-1/6 cursor-pointer hover:bg-gray-100"
               onClick={()=>setWorkflowVisible(true)}>
-              {getFileIcon('workflow',"h-8")}
+              {getIcon('workflow',"h-8")}
               <CardTitle className="text-sm font-medium">My Workflows</CardTitle>
             </CardHeader>
               <CardContent className="h-[calc(100%-3rem)]  flex bg-gray-800 text-white flex-col items-center p-2 text-muted-foreground">
                 {workflows.length > 1 ?
                   <div className="flex w-full h-full items-center justify-center gap-2">
-                    <div className="flex flex-col items-center cursor-pointer justify-center text-2xl rounded-full border-[20px] bg-transparent border-blue-400 w-36 h-36 ">
-                        <div className="flex items-center justify-center cursor-default flex-col w-full h-full rounded-full">
-                          <span className="cursor-pointer" onClick={()=> setWorkflowVisible(true)}>{workflows.length}</span>
-                          <span className="cursor-pointer" onClick={()=> setWorkflowVisible(true)}>Total</span>
+                    <div className="relative h-36 w-36 cursor-pointer rounded-full">
+                      <Doughnut data={getDate(1,1)} options={options} />
+                      <div className="absolute inset-0 flex items-center justify-center rounded-full ">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold">{workflows.length}</div>
+                          <div className="text-xs text-muted-foreground">Total</div>
                         </div>
+                      </div>
                     </div>
-                    <div className=" flex justify-center mr-12 ml-3 items-center text-sm text-gray-300 gap-2">
+                    <div className=" flex justify-center mr-8 ml-8 items-center text-sm text-gray-300 gap-2">
                       <span className="text-lg text-blue-300 cursor-pointer">{workflows.length}</span>
                       <span className="text-xs cursor-pointer" onClick={()=> setWorkflowVisible(true)}>On time</span>
                     </div>
@@ -203,31 +216,21 @@ export default function Home() {
           <Card className="row-span-2 rounded-none">
               <CardHeader className="flex flex-row items-center gap-2 border-b h-1/6 cursor-pointer hover:bg-gray-100" 
                           onClick={()=>router.push('/favorites')}>
-                {getFileIcon('star',"h-5 w-5 text-yellow-500 stroke-2")}
+                {getIcon('star',"h-5 w-5 text-yellow-500 stroke-2")}
                   <CardTitle className="text-sm font-medium">Favorites</CardTitle>
               </CardHeader>
               {favorites.length > 0 ? 
               <CardContent className="h-[calc(100%-3rem)] bg-gray-100 flex flex-col items-center px-0 text-muted-foreground">
-                {favorites.map((item:any)=>(
+                {favorites.map(item => (
                   <div 
                     key={item.id}
                     onDoubleClick={() => handleDoubleClick(item.id,item.type)}
                     className="flex justify-between cursor-pointer border gap-2 w-full text-black p-1 px-2 bg-grey-100" >
                       <div className="flex gap-2 items-center">
-                        {getFileIcon(item.type,"h-5")}
-                        <span className="text-sm ">{item.name}</span>
+                        {getIcon(item.type,"h-5")}
+                        <span className="text-sm text-black max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap">{item.name}</span>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={(e) =>{ 
-                          toggleFavoriteItem(item.id)
-                        }}
-                        aria-label={item.isFavorite ? "Remove from favorites" : "Add to favorites"}
-                      >
-                        {getFileIcon('star',`${item.isFavorite ? "fill-yellow-400" : "fill-none"}`)}
-                      </Button>
+                      <FavoriteIcon item={item} items={favorites}/>
                   </div>
                 ))}
               </CardContent>
@@ -247,7 +250,7 @@ export default function Home() {
           <Card className="row-span-2 rounded-none">
             <CardHeader className="flex flex-row items-center gap-2 border-b h-1/6 cursor-pointer hover:bg-gray-100" 
                           onClick={()=>router.push('/recentlyaccessed')}>              
-              {getFileIcon('clock',"h-5 w-5 text-purple-500")}
+              {getIcon('clock',"h-8 w-8 stroke-1 text-white fill-gray-400")}
               <CardTitle className="text-sm font-medium">Recently Accessed</CardTitle>
             </CardHeader>
             <CardContent className="h-[calc(100%-3rem)] bg-gray-100 flex flex-col items-center px-0 text-muted-foreground">
@@ -256,8 +259,8 @@ export default function Home() {
                     key={item.id}
                     className="flex justify-between cursor-pointer gap-2 w-full text-black py-2 px-2 border bg-grey-100 hover:bg-gray-100" >
                       <div className="flex gap-2 items-center">
-                        {getFileIcon(item.type,"h-6 w-6")}
-                        <span className="text-sm">{item.name}</span>
+                        {getIcon(item.type,"h-6 w-6")}
+                        <span className="text-sm text-black max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap">{item.name}</span>
                       </div>
                       
                   </div>
@@ -267,39 +270,36 @@ export default function Home() {
 
           {/* ------------------------------------------------------------------------------- */}
           {/* Enterprise */}
-          <Button variant="ghost" 
-                  className="bg-purple-900 hover:bg-purple-950 hover:text-white text-white flex flex-col items-center justify-center gap-2 h-full rounded-none"
+          <div className="bg-stone-700 cursor-pointer hover:bg-stone-800 hover:text-white text-white flex flex-col items-center justify-center"
                   onClick={()=>router.push('/enterprise')}>
-            <Folder className="h-6" />
-            <span className="text-xs text-center">Enterprise Folder</span>
-          </Button>
+            <Folder className="h-12 w-12 p-2" />
+            <span className="text-sm text-center">Enterprise Folder</span>
+          </div>
 
           {/* ------------------------------------------------------------------------------- */}          
           {/* Personal Workspace */}
-          <Button variant="ghost" 
-                  className="bg-zinc-700 hover:bg-zinc-800 hover:text-white text-white flex flex-col items-center justify-center gap-2 h-full rounded-none"
+          <div className="bg-zinc-700 cursor-pointer hover:bg-zinc-800 hover:text-white text-white flex flex-col items-center justify-center"
                   onClick={()=>router.push('/personalworkspace')}>
-            <Folder className="h-6 w-6" />
-            <span className="text-xs text-center">Personal Workspace</span>
-          </Button>
+            <Folder className="h-12 w-12 p-2" />
+            <span className="text-sm text-center">Personal Workspace</span>
+          </div>
 
           {/* ------------------------------------------------------------------------------- */}          
           {/* User Guides */}
-          <Button variant="ghost" 
-                  className="bg-blue-600 hover:bg-blue-700 hover:text-white text-white flex flex-col items-center justify-center gap-2 h-full rounded-none"
+          <div className="bg-blue-700 cursor-pointer hover:bg-blue-800 hover:text-white text-white flex flex-col items-center justify-center"
                   onClick={()=>router.push('/userguide')}>
-            <Folder className="h-6 w-6" />
-            <span className="text-xs text-center">User Guides</span>
-          </Button>
+            <Folder className="h-12 w-12 p-2" />
+            <span className="text-sm text-center">User Guides</span>
+          </div>
 
           {/* ------------------------------------------------------------------------------- */}          
           {/* NFA and Letters Workflow Report */}
-          <Button variant="ghost" 
-                  className="bg-blue-800 hover:bg-blue-900 hover:text-white text-white flex flex-col items-center justify-center gap-2 h-full rounded-none"
+          <div className="bg-purple-900 cursor-pointer hover:bg-purple-950 hover:text-white text-white flex flex-col items-center justify-center"
                   onClick={()=>router.push('/nfareport')}>
-            <Folder className="h-6 w-6" />
-            <span className="text-xs text-center">NFA and Letters Workflow Report</span>
-          </Button>
+            <Folder className="h-12 w-12 p-2" />
+            <span className="text-sm text-center">NFA and Letters Workflow Report</span>
+          </div>
+          
         </div>
       </div>
     </div>

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useState, useRef, useCallback, useEffect } from "react"
 import FileManager from "@/components/FileManger"
-import { getFileIcon, getFileThumbnail } from "./icon/icon"
+import { getIcon, getFileThumbnail } from "./icon/icon"
 import GridLayout from "@/components/Gridlayout";
 import { toast } from "@/hooks/use-toast"
 import Header from "@/components/Header"
@@ -151,14 +151,14 @@ export default function PersonalWorkspace() {
         parentFolderId={workspaceId}
       />
       <ActionBar
-      items={files}
-      setItems={setFiles}
-      selectedItems={selectedFiles}
-      setSelectedItems={setSelectedFiles}
-      parentFolderId={workspaceId}
-      setEditingItemId={setEditingItemId}
-      setEditingItemName={setEditingItemName}
-      />
+        items={files}
+        setItems={setFiles}
+        selectedItems={selectedFiles}
+        setSelectedItems={setSelectedFiles}
+        parentFolderId={workspaceId}
+        setEditingItemId={setEditingItemId}
+        setEditingItemName={setEditingItemName}
+        />
       <div>
         {viewType === 'list' ? (
           <FileManager
@@ -169,7 +169,6 @@ export default function PersonalWorkspace() {
             toggleItem={toggleFile}
             toggleAll={toggleAll}
             selectedItems={selectedFiles}
-            setSelectedItems={setSelectedFiles}
             editingItemId={editingItemId}
             setEditingItemId={setEditingItemId}
             editingItemName={editingItemName}

@@ -56,13 +56,10 @@ const InitUser = () => {
                         authorization : `Bearer `+ localStorage.getItem('token')
                     }
                 })
-                const favoriteFolders = favRes.data.favoriteFolders.map((folder: any) =>({...folder,type:'folder'}));
-                const favoriteFiles = favRes.data.favoriteFiles.map((file: any) =>({...file,type:'file'}));;
-    
-                
+                                
                 setFavorite(prevFavorites => ({
                     ...prevFavorites,
-                    favorites: [...favoriteFolders,...favoriteFiles ]
+                    favorites: [...favRes.data.favoriteFolders,...favRes.data.favoriteFiles ]
                 }));
                 
 

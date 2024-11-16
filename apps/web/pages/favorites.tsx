@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { useRouter } from "next/router"
 import { useEffect, useState } from "react"
 import FileManager from "@/components/FileManger"
-import {getFileIcon} from "./icon/icon"
+import {getIcon} from "./icon/icon"
 import { favoriteItems } from "@/lib/store/selectors/favoritesSelectors"
 import { useRecoilValue } from "recoil"
 
@@ -38,7 +38,7 @@ interface Item {
 
 export default function Favorites() {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [items, setItems] = useState<Item[]>(itemsList);
+  const [items, setItems] = useState<Item[]>([]);
   const favorites = useRecoilValue(favoriteItems);
 
   const toggleAll = (checked: boolean) => {

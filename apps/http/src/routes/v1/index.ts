@@ -162,6 +162,7 @@ router.get("/enterprise",middleware, async (req, res) => {
                 name:"enterprise",
             },
             include: {
+                files:true,
                 subfolders: {
                     include: {
                         subfolders: true,
@@ -177,9 +178,11 @@ router.get("/enterprise",middleware, async (req, res) => {
         }
 
         const enterpriseFolder = enterprise.subfolders.map((folder:any)=>formatItem(folder, true));
-        
+        const enterpriseFiles = enterprise.files.map((file: any) => formatItem(file, false));
+
         res.json({
             enterpriseFolder,
+            enterpriseFiles,
             EnterperiseId: enterprise.id
         })
     }
@@ -277,7 +280,9 @@ router.get("/userGuide",middleware, async (req, res) => {
         const fileData = userGuide.files.map((file:any) => formatItem(file, false));
         res.json({
             folderData,
-            fileData
+            fileData,
+            userGuideId: userGuide.id,
+            isFavorite: userGuide.isFavorite
         })
     }
     catch(err){

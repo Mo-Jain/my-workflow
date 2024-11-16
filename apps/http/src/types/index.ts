@@ -45,7 +45,8 @@ export const deleteFileSchema = z.object({
 
 export const updateFileSchema = z.object({
   name: z.string(),
-  isFavorite: z.boolean().optional()
+  isFavorite: z.boolean().optional(),
+  type: z.string().optional(),
 })
 
 export const createFavoriteSchema = z.object({

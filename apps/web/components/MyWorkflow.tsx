@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table"
 import FileManager from "./FileManger"
 import { useState } from "react"
-import { getFileIcon } from "@/pages/icon/icon"
+import { getIcon } from "@/pages/icon/icon"
 import { useRouter } from "next/navigation"
 import { workflowItems } from "@/lib/store/selectors/workflow"
 import { useRecoilValue } from "recoil"
@@ -74,10 +74,10 @@ export default function Component(
 
         <FileManager
           headers={["Status","Step Due Date","Workflow","CurrentStep","AssignedTo","StartDate"]}
-          items={workflows}
+          items={workflows.map((workflow:any) => ({...workflow,type:workflow.status}))}
           setItems={setWorkflowsList}
           hasFavorite={false}
-          iconStyle="h-3 w-3"
+          iconStyle="h-4 w-4"
         />
       </div>
     </div>

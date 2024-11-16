@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/router"
 import { useRecoilValue } from "recoil"
 import { assignmentItems } from "@/lib/store/selectors/assignment"
-import { getFileIcon } from "./icon/icon"
+import { getIcon } from "./icon/icon"
 
 // Sample data - in a real app this would come from your backend
 const assignmentsList = [
@@ -90,13 +90,13 @@ export default function MyAssignment() {
                 <TableRow className="cursor-pointer" key={assignment.id} onClick={()=> router.push('/nfaform')}>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {getFileIcon('workflow',"h-4 w-4 text-blue-500")}
+                      {getIcon('workflow',"h-4 w-4 text-blue-500")}
                       {assignment.name}
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {getFileIcon('unknown','h-6 w-6 text-gray-400')}
+                      {getIcon('unknown','h-6 w-6 text-gray-400')}
                       {assignment.location}
                     </div>
                   </TableCell>

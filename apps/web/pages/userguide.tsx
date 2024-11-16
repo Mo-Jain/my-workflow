@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table"
 import { Card, CardContent } from "@/components/ui/card"
 import FileManager from "@/components/FileManger"
-import {getFileIcon} from "./icon/icon"
+import {getIcon} from "./icon/icon"
 import GridLayout from "@/components/Gridlayout"
 import axios from "axios"
 import { BASE_URL } from "@/next.config"
@@ -168,7 +168,6 @@ export default function UserGuides() {
               toggleItem={toggleFile}
               toggleAll={toggleAll}
               selectedItems={selectedFiles}
-              setSelectedItems={setSelectedFiles}
               editingItemId={editingItemId}
               setEditingItemId={setEditingItemId}
               editingItemName={editingItemName}

@@ -47,23 +47,19 @@ async function deleteFunction(name:string,setItems:React.Dispatch<React.SetState
 
 export function toaster(action:string, id:string | number, error:boolean){
   if(error){
-    setTimeout(() => {
-      toast({
-        title: "Error",
-        description: `Could not ${action} item ${id}`,
-        className: "text-black bg-white border-0 rounded-md shadow-mg shadow-black/5 font-normal",
-        variant: "destructive",
-      })
-    }, 1000)
+    toast({
+      title: "Error",
+      description: `Could not ${action} item ${id}`,
+      className: "text-black bg-white border-0 rounded-md shadow-mg shadow-black/5 font-normal",
+      variant: "destructive",
+    })
   }
   else{
-    setTimeout(() => {
-      toast({
-        title: `Item ${action}d`,
-        description: `Successfully ${action}d ${id}`,
-        className: "text-black bg-white border-0 rounded-md shadow-mg shadow-black/5 font-normal"
-      })
-    }, 1000)
+    toast({
+      title: `Item ${action}d`,
+      description: `Successfully ${action}d ${id}`,
+      className: "text-black bg-white border-0 rounded-md shadow-mg shadow-black/5 font-normal"
+    })
   }
 }
 export default function Admin(){

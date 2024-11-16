@@ -2,7 +2,6 @@ import {useEffect, useState} from "react"
 import { Badge, ChevronDown, Folder, LayoutGrid, LayoutList, Search, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import FileManager from "@/components/FileManger"
-import { getFileIcon, getFileThumbnail } from "./icon/icon"
 import GridLayout from "@/components/Gridlayout"
 import Header from "@/components/Header"
 import axios from "axios"
@@ -96,7 +95,8 @@ export default function Enterprise() {
           }
         })
         const enterpriseFolder = res.data.enterpriseFolder;
-        setFolders(enterpriseFolder);
+        const enterpriseFiles = res.data.enterpriseFiles;
+        setFolders([...enterpriseFolder,...enterpriseFiles]);
         setWorkspaceId(res.data.EnterperiseId);
       }
       catch (error) {
@@ -158,7 +158,6 @@ export default function Enterprise() {
                 toggleAll={toggleAll}
                 toggleItem={toggleFolder}
                 selectedItems={selectedFolders}
-                setSelectedItems={setSelectedFolders}
                 editingItemId={editingItemId}
                 setEditingItemId={setEditingItemId}
                 editingItemName={editingItemName}

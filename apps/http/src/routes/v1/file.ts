@@ -92,7 +92,12 @@ fileRouter.put("/:fileId", middleware, async (req, res) => {
             }
         });
 
-        if(file?.creatorId != req.userId){
+        if(!file){
+            res.status(404).json({message: "File not found"})
+            return
+        }
+
+        if(file.creatorId != req.userId){
             res.status(403).json({message: "Not Authorized to update"})
             return
         }
@@ -106,7 +111,8 @@ fileRouter.put("/:fileId", middleware, async (req, res) => {
             }, 
             data: {
                 name: name,
-                isFavorite: parsedData.data.isFavorite ?? file?.isFavorite
+                isFavorite: parsedData.data.isFavorite ?? file.isFavorite,
+                type: parsedData.data.type ?? file.type
             }
         })
 
