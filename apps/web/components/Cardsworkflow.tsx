@@ -55,7 +55,7 @@ export default function Cardsworkflow({ setWorkflowVisible }: WorkflowCardProps)
   }
 
   return (
-    <Card className="row-span-2 rounded-none">
+    <Card className="row-span-2 rounded-none overflow-hidden">
             <CardHeader 
               className="flex flex-row items-center gap-2 border-b h-1/6 cursor-pointer hover:bg-gray-100"
               onClick={()=>setWorkflowVisible(true)}>

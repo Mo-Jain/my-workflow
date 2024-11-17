@@ -18,39 +18,33 @@ import WorkflowPopup from "./WorkflowPopup"
 import { Input } from "./ui/input"
 
 // Sample data - in a real app this would come from your backend
-const workflowsListnotused = [
-  {
-    id: "1",
-    status: "on time",
-    durDate: "",
-    type: "dot",
-    workflow: "30079647 - NFA WF - 10/Sep/2024 03:16",
-    currentstep: "NFA Form - 10/Sep/2024 03:16 PM",
-    assignedto: "Mohit Jain",
-    startdate: "September 10, 2024"
-  },
-  {
-    id: "2",
-    status: "on time",
-    durDate: "",
-    type: "dot",
-    workflow: "30079647 - NFA WF - 04/Nov/2024 03:53",
-    currentstep: "NFA Form - 04/Nov/2024 03:53 PM",
-    assignedto: "Mohit Jain",
-    startdate: "November 4, 2024"
-  }
-]
+
 
 
 interface Item {
   id: string,
   status: string,
-  durDate: Date,
+  dueDate: Date,
   type: string,
   workflowName: string,
   currentStep: string,
   assignedTo: string,
-  startDate: Date
+  startDate: Date,
+  files: File[]
+}
+
+interface File {
+  id: string;
+  name: string;
+  path: string;
+  type: string;
+  creatorId: string;
+  size: string;
+  parentFolderId: string | null;
+  isFavorite: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  workflowId: string | null;
 }
 
 export default function Component(
@@ -69,6 +63,7 @@ export default function Component(
   useEffect(() => {
     if(!workflows[0]) return;
 
+    console.log(workflows);
     setWorkflowsList(workflows);
     console.log(workflows);
   }, [workflows]);
@@ -117,7 +112,7 @@ export default function Component(
           
           {/* Popup content */}
           <div className="relative z-40 bg-white rounded-lg shadow-lg w-max h-[85vh] overflow-hidden  ">
-            <WorkflowPopup onClose={()=>setWorkflowVisible(false)} clickedItem={clickedItem} />
+            <WorkflowPopup onClose={()=>setWorkflowVisible(false)} clickedItem={clickedItem} setClickedItem={setClickedItem} />
           </div>
         </div>
       )}
@@ -158,7 +153,7 @@ export default function Component(
                 { workflowsList.map((item:any) => (
                     <TableRow key={item.id} onClick={()=>handleClick(item)} className="cursor-pointer hover:bg-gray-100">
                     {Object.entries(item)
-                      .filter(([key]) => key !== "id" && key !== "type" && key !== "isFavorite")
+                      .filter(([key]) => key !== "id" && key !== "type" && key !== "isFavorite" && key !== "files")
                       .map(([key, value], index) => (
                         <TableCell key={key} className="items-center gap-2">
                           <div className="flex items-center gap-2">

@@ -6,27 +6,56 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { FileText, Circle, ArrowBigRightDashIcon, Clock, Clock1, Clock8, ChevronDown, ExternalLink } from 'lucide-react'
 import { getIcon } from "@/pages/icon/icon"
-import { useRecoilValue } from "recoil"
+import { useRecoilValue, useSetRecoilState } from "recoil"
 import { userNameState } from "@/lib/store/selectors/user"
+import { toaster } from "@/pages/admin"
+import axios from "axios"
+import { BASE_URL } from "@/next.config"
+import { assignmentState } from "@/lib/store/atoms/assignment"
+import { workflowState } from "@/lib/store/atoms/workflow"
+import { on } from "events"
+import { workflowItems } from "@/lib/store/selectors/workflow"
 
 interface Item {
   id: string,
   status: string,
-  durDate: Date,
+  dueDate: Date,
   type: string,
   workflowName: string,
   currentStep: string,
   assignedTo: string,
-  startDate: Date
+  startDate: Date,
+  files: File[]
+}
+
+interface File {
+  id: string;
+  name: string;
+  path: string;
+  type: string;
+  creatorId: string;
+  size: string;
+  parentFolderId: string | null;
+  isFavorite: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  workflowId: string | null;
 }
 
 export default function WorkflowPopup(
-  {onClose,clickedItem}:
-  {onClose:()=>void,clickedItem:Item | undefined}
+  {onClose,clickedItem,setClickedItem}:
+  {
+    onClose:()=>void,
+    clickedItem:Item | undefined,
+    setClickedItem:React.Dispatch<React.SetStateAction<Item | undefined>>
+  }
 ) {
   console.log(clickedItem);
   const userName  =  useRecoilValue(userNameState);
-  const [shortName,setShortName] = React.useState("")
+  const [shortName,setShortName] = React.useState("");
+  const setWorkflow = useSetRecoilState(workflowState);
+  const setAssignments = useSetRecoilState(assignmentState);
+  const workflows = useRecoilValue(workflowItems);
 
 
   React.useEffect(() => {
@@ -37,6 +66,70 @@ export default function WorkflowPopup(
       setShortName(temp);
     }
   },[userName])
+
+  const handleStopWorkflow = async () => {
+    try{
+      const res = await axios.put(`${BASE_URL}/api/v1/workflow/${clickedItem?.id}`, {
+        status: "stopped"
+      }, {
+        headers: {
+          "Content-type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        }
+      });
+      toaster("workflow stopped",res.data.id,false);
+      
+      setWorkflow(prevWorkflows => ({
+        ...prevWorkflows,
+        items: prevWorkflows.items.map(item => item.id === res.data.id ? { ...item, status: "stopped" } : item)
+      }));
+
+      setAssignments(prevAssignments => ({
+        ...prevAssignments,
+        items: prevAssignments.items.map(item => item.id === res.data.id ? { ...item, status: "stopped" } : item)
+      }));
+
+      
+      setClickedItem( prev => {
+        return (
+          prev && { ...prev, status: "stopped" }
+        )});
+        
+      console.log(workflows);
+      
+    }catch(e){
+      toaster("stop",'',true);
+    }
+  }
+
+  const handleDeleteWorkflow = async () => {
+    try{
+      const res = await axios.delete(`${BASE_URL}/api/v1/workflow/${clickedItem?.id}`, {
+        headers: {
+          "Content-type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        }
+      });
+      toaster("workflow deleted",res.data.id,false);
+
+      setAssignments(prevAssignments => ({
+        ...prevAssignments,
+        items: prevAssignments.items.filter(item => item.id !== res.data.id)
+      }));
+
+      setWorkflow(prevWorkflows => ({
+        ...prevWorkflows,
+        items: prevWorkflows.items.filter(item => item.id !== res.data.id)
+      }));
+
+      setClickedItem(undefined);
+
+      onClose();
+    }catch(e){
+      toaster("delete",'',true);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white w-[75vw] py-2 px-4 overflow-y-hidden text-xs">
        <div className="flex items-center justify-between ">
@@ -63,22 +156,22 @@ export default function WorkflowPopup(
                   <div className="text-sm text-gray-500">End</div>
                 </div>
 
-                <div className="relative">
+                {clickedItem?.status !== "stopped" && <div className="relative">
                   <div className="absolute -left-[28px] bg-white h-6 flex items-center">
                      <Clock8 className={`h-4 w-4 text-blue-800 fill-blue-300`} />
                   </div>
                   <div className="text-sm text-gray-500">Next Step</div>
-                </div>
+                </div>}
 
                 <div className="relative flex items-center justify-center">
-                  <div className="absolute -left-[44px] bg-white h-12 w-12 rounded-full flex items-center justify-center bg-white">
-                    {getIcon(clickedItem ? clickedItem.status : "","h-10 w-10 bg-white")}
+                  <div className="absolute -left-[46px]  h-14 w-14 rounded-full flex items-center justify-center bg-white ">
+                    {getIcon(clickedItem ? clickedItem.status : "","h-10 w-10")}
                   </div>
 
-                  <ArrowBigRightDashIcon className="absolute -left-[4px] z-10 h-20 w-20 text-blue-500 m-0" />
-                  <Card className="relative -left-[7vw] rounded-none border-l-4 border-l-blue-500">
+                  <ArrowBigRightDashIcon className={`absolute -left-[4px] z-10 h-20 w-20 ${clickedItem?.status!=="stopped"? "text-blue-500 fill-blue-500":"text-red-500 fill-red-500"} m-0`} />
+                  <Card className={`relative -left-[7vw] rounded-none border-l-4 ${clickedItem?.status!=="stopped"? "border-l-blue-500":"border-l-red-500"}`}>
                     <CardContent className="p-4">
-                      <div className="mb-1 font-medium text-blue-600">Current Step</div>
+                      <div className={`mb-1 font-medium ${clickedItem?.status!=="stopped"? "text-blue-600":"text-red-600"}`}>Current Step</div>
                       <div className="flex items-center justify-between">
                         <div className="flex  gap-2">
                           {getIcon(clickedItem ? clickedItem.status : "","h-5 w-5 text-blue-500")}
@@ -87,7 +180,7 @@ export default function WorkflowPopup(
                             <div className="text-sm text-muted-foreground">{clickedItem?.assignedTo}</div>
                           </div>
                         </div>
-                        <Badge variant="secondary" className="bg-blue-50 text-blue-700">
+                        <Badge variant="secondary" className={` ${clickedItem?.status === "on time" ? "bg-blue-50 text-blue-700" : "bg-red-50 text-red-700"}`}>
                           {clickedItem?.status}
                         </Badge>
                       </div>
@@ -120,7 +213,7 @@ export default function WorkflowPopup(
                 <TabsTrigger value="attachments">
                   Attachments
                   <Badge variant="secondary" className="ml-2 bg-gray-100">
-                    1
+                    {clickedItem?.files?.length === 0 ? "" : clickedItem?.files?.length}
                   </Badge>
                 </TabsTrigger>
               </TabsList>
@@ -168,18 +261,27 @@ export default function WorkflowPopup(
               </TabsContent>
               
               <TabsContent value="attachments" className="mt-4 min-h-[calc(100vh-291px)]">  
-                <div className="flex items-center text-black gap-2 p-2 hover:bg-gray-100 rounded-lg cursor-pointer">
-                  <FileText className="h-5 w-5 text-red-500" />
-                  <span className="text-xs ">NFA for china visit approval.pdf</span>
+                {clickedItem?.files && clickedItem?.files.map(file =>{
+                  console.log(file);
+                  return(
+                  <div className="flex items-center text-black gap-2 p-2 hover:bg-gray-100 rounded-lg cursor-pointer">
+                    {getIcon(file.type,"h-5 w-5 text-red-500")}
+                  <span className="text-xs ">{file.name}</span>
                 </div>
+                )})}
               </TabsContent>
             </Tabs>
 
-            <div className="mt-4">
-              <Button className="w-full bg-blue-900 hover:bg-blue-800">
+            {clickedItem?.status === "on time" ? <div className="mt-4">  
+              <Button className="w-full bg-blue-900 hover:bg-blue-800" onClick={handleStopWorkflow}>
                 Stop
               </Button>
             </div>
+          :  
+            <Button className="w-full bg-red-900 hover:bg-blue-800" onClick={handleDeleteWorkflow}>
+                Delete
+            </Button>
+          }
           </div>
         </div>
       </div>

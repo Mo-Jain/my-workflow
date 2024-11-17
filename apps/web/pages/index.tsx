@@ -116,7 +116,7 @@ export default function Home() {
           
           {/* ------------------------------------------------------------------------------- */}
           {/* My Assignments */}
-          <Card className="row-span-2 rounded-none">
+          <Card className="row-span-2 rounded-none overflow-hidden">
             <CardHeader 
               className="flex flex-row items-center gap-2 border-b h-1/6 cursor-pointer hover:bg-gray-100"
               onClick={()=>router.push('/myassignment')} >
@@ -148,7 +148,7 @@ export default function Home() {
 
           {/* ------------------------------------------------------------------------------- */}
           {/* Favorites */}
-          <Card className="row-span-2 rounded-none">
+          <Card className="row-span-2 rounded-none overflow-hidden">
               <CardHeader className="flex flex-row items-center gap-2 border-b h-1/6 cursor-pointer hover:bg-gray-100" 
                           onClick={()=>router.push('/favorites')}>
                 {getIcon('star',"h-5 w-5 text-yellow-500 stroke-2")}
@@ -182,7 +182,7 @@ export default function Home() {
 
           {/* ------------------------------------------------------------------------------- */}
           {/* Recently Accessed */}
-          <Card className="row-span-2 rounded-none">
+          <Card className="row-span-2 rounded-none overflow-hidden">
             <CardHeader className="flex flex-row items-center gap-2 border-b h-1/6 cursor-pointer hover:bg-gray-100" 
                           onClick={()=>router.push('/recentlyaccessed')}>              
               {getIcon('clock',"h-8 w-8 stroke-1 text-white fill-gray-400")}

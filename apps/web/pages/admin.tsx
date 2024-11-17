@@ -37,7 +37,7 @@ async function deleteFunction(name:string,setItems:React.Dispatch<React.SetState
   try{
     const res = await axios.delete(`${BASE_URL}/api/v1/admin/${name}/${id}`);
     setItems((items:any) => items.filter((item:any) => item.id !== id));
-    toaster("delete",id,false);
+    toaster("deleted",id,false);
     return res;      
   }catch(e){
     toaster("delete",id,true);
@@ -56,8 +56,8 @@ export function toaster(action:string, id:string | number, error:boolean){
   }
   else{
     toast({
-      title: `Item ${action}d`,
-      description: `Successfully ${action}d ${id}`,
+      title: `Item ${action}`,
+      description: `Successfully ${action} ${id}`,
       className: "text-black bg-white border-0 rounded-md shadow-mg shadow-black/5 font-normal"
     })
   }
@@ -140,7 +140,7 @@ export default function Admin(){
         path:"root"
       }
       setFolderList(folderList => [...folderList, folder]);
-      toaster("create",res.data.id,false);
+      toaster("created",res.data.id,false);
     }catch(e){
       toaster("create",'',true);
     }
@@ -159,7 +159,7 @@ export default function Admin(){
           "Authorization": `Bearer ${localStorage.getItem("token")}`
         },
       });
-      toaster("create",res.data.id,false);
+      toaster("created",res.data.id,false);
     }catch(e){
       toaster("create",'',true);
     }
@@ -197,7 +197,7 @@ export default function Admin(){
         },
       });
       
-      toaster("create",res.data.id,false);
+      toaster("created",res.data.id,false);
     }catch(e){
       toaster("create",'',true);
     }
@@ -238,7 +238,7 @@ export default function Admin(){
       });
       console.log(res.data.workflow);
       
-      toaster("create",res.data.id,false);
+      toaster("created",res.data.id,false);
     }catch(e){
       toaster("create",'',true);
     }
@@ -249,7 +249,7 @@ export default function Admin(){
     const workflows = res.data.workflowData.map((workflow:any) => ({
       id: workflow.id,
       status: workflow.status,
-      durDate: workflow.durDate,
+      dueDate: workflow.dueDate,
       type: workflow.type,
       workflowName: workflow.workflowName,
       currentStep: workflow.currentStep,
@@ -292,7 +292,7 @@ export default function Admin(){
       path:data.path
     }
     setFolderList(folderList => [...folderList, folder]);
-    toaster("create",res.data.id,false);      
+    toaster("created",res.data.id,false);      
   }catch(e){
     toaster("create",'',true);
   }
@@ -353,6 +353,7 @@ export default function Admin(){
                       <TableHead>ParentFolderName</TableHead>
                       <TableHead>CreatedAt</TableHead>
                       <TableHead>Path</TableHead>
+                      <TableHead>Workflow Id</TableHead>
                       <TableHead>Delete</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -367,6 +368,7 @@ export default function Admin(){
                         <TableCell>{file.parentFolderName}</TableCell>
                         <TableCell>{file.createdAt}</TableCell>                    
                         <TableCell>{file.path}</TableCell>
+                        <TableCell>{file.workflowId}</TableCell>
                         <TableCell>
                           <Button className="bg-red-500 text-white" onClick={()=>{deleteFile(file.id)}}>
                             <TrashIcon className="h-4 w-4"/>
@@ -519,11 +521,13 @@ export default function Admin(){
                 <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>ID</TableHead>
-                    <TableHead>User Id</TableHead>
-                    <TableHead>User Name</TableHead>
+                    <TableHead>Creator Id</TableHead>
+                    <TableHead>Creator Name</TableHead>
                     <TableHead>Current Step</TableHead>
                     <TableHead>Start Date</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Delete</TableHead>
+
                 </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -531,10 +535,11 @@ export default function Admin(){
                     <TableRow>
                         <TableCell>{workflow.workflowName}</TableCell>
                         <TableCell>{workflow.id}</TableCell>
-                        <TableCell>{workflow.userId}</TableCell>
+                        <TableCell>{workflow.creatorId}</TableCell>
                         <TableCell>{workflow.userName}</TableCell>
                         <TableCell>{workflow.currentStep}</TableCell>
                         <TableCell>{workflow.startDate}</TableCell>
+                        <TableCell>{workflow.status}</TableCell>
                         <TableCell>
                             <Button className="bg-red-500 text-white" onClick={()=>{deleteWorkflow(workflow.id)}}>
                             <TrashIcon className="h-4 w-4" />

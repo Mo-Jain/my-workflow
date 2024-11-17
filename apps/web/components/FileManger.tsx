@@ -162,7 +162,7 @@ export default function FileManager({
         item.id === itemId ? { ...item, name: uniqueName } : item
       ))
       setEditingItemId(null)
-      toaster("rename",itemId,false)
+      toaster("renamed",itemId,false)
 
       try {
         const linkType = itemType === "folder" ? "folder" : "file";

@@ -5,13 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useState, useRef, useCallback, useEffect } from "react"
 import FileManager from "@/components/FileManger"
-import { getIcon, getFileThumbnail } from "./icon/icon"
+import { getIcon } from "./icon/icon"
 import GridLayout from "@/components/Gridlayout";
 import { toast } from "@/hooks/use-toast"
 import Header from "@/components/Header"
 import axios from "axios"
 import { BASE_URL } from "@/next.config"
-import { toaster } from "./admin"
 import ActionBar from "@/components/ActionBar"
 
 

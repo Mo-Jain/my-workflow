@@ -47,6 +47,7 @@ export const updateFileSchema = z.object({
   name: z.string(),
   isFavorite: z.boolean().optional(),
   type: z.string().optional(),
+  workflowId: z.string().optional(),
 })
 
 export const createFavoriteSchema = z.object({
@@ -68,7 +69,7 @@ export const createWorkflowSchema = z.object({
 
 export const updateWorkflowSchema = z.object({
   status: z.string().optional(),
-  assignedTo: z.string().optional(),
+  assigneeId: z.string().optional(),
 })
 
 export const createAssignmentSchema = z.object({

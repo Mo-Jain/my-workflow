@@ -9,17 +9,21 @@ generator client {
   provider = "prisma-client-js"
 }
 
+
 model User {
-  id                    String           @id @default(uuid())
-  usermail              String           @unique
-  name                  String
-  password              String           
-  files                 File[]           // One-to-many relation with files
-  folders               Folder[]         // One-to-many relation with folders
-  recentlyViewed        RecentlyViewed[] // One-to-many relation with recently viewed items
-  assignments           Assignment[]
-  workflows             Workflows[]
-  personalWorkspaceId   String?
+  id                   String           @id @default(uuid())
+  usermail             String           @unique
+  name                 String
+  password             String
+  personalWorkspaceId  String?
+
+  // Relations
+  files                File[]           // One-to-many relation with files
+  folders              Folder[]         // One-to-many relation with folders
+  recentlyViewed       RecentlyViewed[] // One-to-many relation with recently viewed items
+  assignments          Assignment[]
+  workflowsCreated     Workflows[]      @relation("CreatorRelation") // Workflows where this user is the creator
+  workflowsAssigned    Workflows[]      @relation("AssigneeRelation") // Workflows where this user is the assignee
 }
 
 model Folder {
@@ -53,6 +57,8 @@ model File {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   RecentlyViewed   RecentlyViewed[]
+  worflows         Workflows?        @relation(fields: [workflowId], references: [id])
+  workflowId       String?
 
   @@unique([ parentFolderId, name])
 }
@@ -80,16 +86,20 @@ model Assignment {
   user             User             @relation(fields: [userId], references: [id])
 }
 
+
 model Workflows {
-  id               String           @id @default(uuid())
-  status           String           @default("on time")
-  dueDate          DateTime?        
-  userId           String
-  workflowName     String
-  currentStep      String
-  assignedTo       String
-  startDate        DateTime         @default(now())
-  user             User             @relation(fields: [userId], references: [id])
+  id            String   @id @default(uuid())
+  status        String   @default("on time")
+  dueDate       DateTime?
+  creatorId     String
+  assigneeId    String
+  workflowName  String
+  currentStep   String
+  startDate     DateTime @default(now())
+
+  // Relations
+  creator       User     @relation("CreatorRelation", fields: [creatorId], references: [id])
+  assignee      User     @relation("AssigneeRelation", fields: [assigneeId], references: [id])
+
+  files         File[]
 }
-
-

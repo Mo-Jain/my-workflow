@@ -131,11 +131,11 @@ adminRouter.get("/workflows",  async (req, res) => {
     {
         const workflows = await client.workflows.findMany({
             include:{
-                user:true
+                creator:true
             }
         });
 
-        const workflowData = workflows.map(workflow =>({...workflow,userName:workflow.user.name}))
+        const workflowData = workflows.map(workflow =>({...workflow,userName:workflow.creator.name}))
 
         res.json({
             workflowData

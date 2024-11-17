@@ -112,7 +112,8 @@ fileRouter.put("/:fileId", middleware, async (req, res) => {
             data: {
                 name: name,
                 isFavorite: parsedData.data.isFavorite ?? file.isFavorite,
-                type: parsedData.data.type ?? file.type
+                type: parsedData.data.type ?? file.type,
+                workflowId: parsedData.data.workflowId
             }
         })
 
@@ -137,6 +138,7 @@ fileRouter.delete("/:fileId", middleware, async (req, res, next) => {
                 id: parsedData.data.fileId
             }
         });
+
         
         if(file?.creatorId != req.userId){
             res.status(403).json({message: "Not Authorized to delete"})

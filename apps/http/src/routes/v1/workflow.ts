@@ -7,23 +7,26 @@ export const workflowRouter = Router();
 
 workflowRouter.get("/", middleware, async (req, res) => {
     try {
-        const user = await client.user.findFirst({
+
+        const workflows = await client.workflows.findMany({
             where: {
-                id: req.userId
+                creatorId: req.userId
             },
             include: {
-                workflows: true
+                files: true,
+                assignee: true
             }
         })
 
-        const workflowData = user?.workflows.map((workflow:any) => ({
+        const workflowData = workflows.map((workflow:any) => ({
             id: workflow.id,
             status: workflow.status,
             dueDate: workflow.dueDate ?? null,
             workflowName: workflow.workflowName,
             currentStep: workflow.currentStep,
-            assignedTo: workflow.assignedTo,
-            startDate: workflow.startDate
+            assignedTo: workflow.assignee.name,
+            startDate: workflow.startDate,
+            files: workflow.files
         }))
 
         res.json({
@@ -42,26 +45,33 @@ workflowRouter.post("/", middleware, async (req, res) => {
     }
 
     try {
-        const user = await client.user.findFirst({
-            where: {
-                id: req.userId
-            }
-        })
-
+      
         const workflow = await client.workflows.create({
                             data: {
-                                userId: req.userId!,
+                                creatorId: req.userId!,
                                 dueDate: parsedData.data.dueDate ?? null,
                                 workflowName: parsedData.data.workflowName,
                                 currentStep: parsedData.data.currentStep,
-                                assignedTo: user?.name!,
+                                assigneeId: req.userId!,
                                 startDate: new Date()
+                            },
+                            include: {
+                                assignee: true
                             }
                         })
 
+        const files = await client.file.findMany({
+            where: {
+                workflowId: workflow.id
+            }
+        })
+        console.log("wrokflow files :",files);
+        
+
         res.json({
             message: "Workflow created successfully",
-            workflow
+            workflow,
+            files
         })
     } catch (e) {
         res.status(400).json({ message: "Internal server error" })
@@ -79,25 +89,42 @@ workflowRouter.put("/:id", middleware, async (req, res) => {
     
     let updatedData = {};
 
-    if(data.assignedTo && !data.status){
-        updatedData = { assignedTo:data.assignedTo }
-    }else if(!data.assignedTo && data.status){
+    if(data.assigneeId && !data.status){
+        updatedData = { assigneeId:data.assigneeId }
+    }else if(!data.assigneeId && data.status){
         updatedData = { status:data.status }
-    }else if(data.assignedTo && data.status){
-        updatedData = { assignedTo:data.assignedTo, status:data.status }
+    }else if(data.assigneeId && data.status){
+        updatedData = { assigneeId:data.assigneeId, status:data.status }
     }
 
     try {
         
         await client.workflows.update({
-            where: {
-                id: req.params.id
-            },
-            data: updatedData
-        })
+                where: {
+                    id: req.params.id
+                },
+                data: updatedData
+            })
 
         res.json({
-            message: "Workflow updated successfully"
+            message: "Workflow updated successfully",
+            id: req.params.id
+        })
+    } catch (e) {
+        res.status(400).json({ message: "Internal server error" })
+    }
+})
+
+workflowRouter.delete("/:id", middleware, async (req, res) => {
+    try {
+        await client.workflows.delete({
+            where: {
+                id: req.params.id
+            }
+        })
+        res.json({
+            message: "Workflow deleted successfully",
+            id: req.params.id
         })
     } catch (e) {
         res.status(400).json({ message: "Internal server error" })

@@ -7,29 +7,27 @@ export const assignmentRouter = Router();
 
 assignmentRouter.get("/", middleware, async (req, res) => {
     try {
-        const user = await client.user.findFirst({
+        
+        const assignments = await client.workflows.findMany({
             where: {
-                id: req.userId
+                assigneeId: req.userId
             },
             include: {
-                assignments: true
+                files: true,
+                creator: true
             }
         })
 
-        if (!user) {
-            res.status(404).json({ message: "User not found" })
-            return
-        }
-
-        const assignmentData = user?.assignments.map((assignment:any) => ({
+        const assignmentData = assignments.map((assignment:any) => ({
             id: assignment.id,
-            name: assignment.name,
-            location: assignment.location,
+            name: assignment.currentStep,
+            location: assignment.workflowName,
             dueDate: assignment.dueDate ?? null,
-            priority: assignment.priority,
+            priority: "medium",
             status: assignment.status,
-            from: user?.name,
+            from: assignment.creator.name,
         }))
+        
 
         res.json({
             assignmentData
