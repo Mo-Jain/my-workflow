@@ -66,8 +66,8 @@ folderRouter.get("/:folderId", middleware, async (req, res) => {
         res.status(404).json({ message: "Folder not found" });
         return;
     }
-    const folderData = folder.subfolders.map((folder:any) => formatItem(folder, true));
-    const fileData = folder.files.map((file:any) => formatItem(file, false));
+    const folderData = folder.subfolders.map((folder) => formatItem(folder, true));
+    const fileData = folder.files.map((file) => formatItem(file, false));
     res.json({
         folderData,
         fileData

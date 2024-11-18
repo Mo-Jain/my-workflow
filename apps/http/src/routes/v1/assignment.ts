@@ -10,7 +10,7 @@ assignmentRouter.get("/", middleware, async (req, res) => {
         
         const assignments = await client.workflows.findMany({
             where: {
-                assigneeId: req.userId
+                currentAssigneeId: req.userId
             },
             include: {
                 files: true,
@@ -18,7 +18,7 @@ assignmentRouter.get("/", middleware, async (req, res) => {
             }
         })
 
-        const assignmentData = assignments.map((assignment:any) => ({
+        const assignmentData = assignments.map(assignment => ({
             id: assignment.id,
             name: assignment.currentStep,
             location: assignment.workflowName,
@@ -37,36 +37,35 @@ assignmentRouter.get("/", middleware, async (req, res) => {
     }
 })
 
-assignmentRouter.post("/", middleware, async (req, res) => {
+assignmentRouter.post("/:workflowId", middleware, async (req, res) => {
     const parsedData = createAssignmentSchema.safeParse(req.body)
     if (!parsedData.success) {
         res.status(400).json({ message: "Wrong folder input format" })
         return
     }
-
+    
     try {
         
-        const assignment = await client.assignment.create({
-                            data: {
-                                userId: req.userId!,
-                                name: parsedData.data.name,
-                                location: parsedData.data.location,
-                                dueDate: parsedData.data.dueDate ?? null,
-                                priority: parsedData.data.priority ?? "medium",
-                                status: parsedData.data.status ?? "ok",
-                            }
-                        })
+        const approverData = parsedData.data.Aprovers.map((approver, index) => ({
+            userId: approver,
+            workflowId: parseInt(req.params.workflowId),
+            order: index+1
+        }))
+
+        const assignment = await client.assignment.createMany({
+                    data: approverData
+        })
 
         res.json({
-            message: "Assignment created successfully",
+            message: "User Assigned successfully",
             id: assignment
         })
     } catch (e) {
-        res.status(400).json({ message: "Internal server error" })
+        res.status(400).json({ message: "Internal server error while creating assignment" })
     }
 })
 
-assignmentRouter.put("/:id", middleware, async (req, res) => {
+assignmentRouter.put("/:workflowId", middleware, async (req, res) => {
     //Todo change this according to the new types defined
     const parsedData = updateAssignmentSchema.safeParse(req.body)
     if (!parsedData.success) {
@@ -75,18 +74,46 @@ assignmentRouter.put("/:id", middleware, async (req, res) => {
     }
 
     try {
-        
-        await client.assignment.update({
+
+         const currentAssignment = await client.assignment.findFirst({
             where: {
-                id: req.params.id
-            },
+                workflowId: parseInt(req.params.workflowId),
+                userId:req.userId,
+              }
+          });
+
+          if(!currentAssignment){
+            res.status(404).json({message: "Assignment not found"})
+            return
+          }
+
+         await client.approvalRecord.create({
             data: {
-                location: parsedData.data.location,
-            }
-        })
+              workflowId: parseInt(req.params.workflowId),
+              userId:req.userId!,
+            },
+          });
+        
+          // Get the next assignee based on the current order
+          // If there is no next assignee, set the status to approved
+          const nextAssignee = await client.assignment.findFirst({
+            where: {
+              workflowId : parseInt(req.params.workflowId),
+              order: currentAssignment.order + 1,
+            },
+          });
+        
+          // Update the workflow's current assignee
+          await client.workflows.update({
+            where: { id: parseInt(req.params.workflowId) },
+            data: {
+              currentAssigneeId: nextAssignee?.userId || null, // Null if no next assignee
+              status: nextAssignee ? "in progress" : "approved", // Update status
+            },
+          });
 
         res.json({
-            message: "Assignment updated successfully"
+            message: "Assignment approved and updated successfully",
         })
     } catch (e) {
         res.status(400).json({ message: "Internal server error" })

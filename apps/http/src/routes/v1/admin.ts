@@ -143,6 +143,7 @@ adminRouter.get("/workflows",  async (req, res) => {
     }
     catch(e)
     {
+        console.error(e);
         res.status(400).json({message: "No Workflows found"})
     }
 })
@@ -230,7 +231,7 @@ adminRouter.delete("/assignments/:id",  async (req, res) => {
     {
         const assignments = await client.assignment.delete({
             where:{
-                id:req.params.id
+                id:parseInt(req.params.id)
             }
         });
         res.json({
@@ -247,18 +248,31 @@ adminRouter.delete("/assignments/:id",  async (req, res) => {
 adminRouter.delete("/workflows/:id",  async (req, res) => {
     try
     {
-        const workflows =await client.workflows.delete({
+        await client.assignment.deleteMany({
             where:{
-                id:req.params.id
+                workflowId:parseInt(req.params.id)
+            }
+        });
+
+        await client.approvalRecord.deleteMany({
+            where:{
+                workflowId:parseInt(req.params.id)
+            }
+        });
+
+        await client.workflows.delete({
+            where:{
+                id:parseInt(req.params.id)
             }
         });
         res.json({
             message:"Workflow deleted successfully",
-            workflows
+            
         })
     }
     catch(e)
     {
+        console.error(e)
         res.status(400).json({message: "Workflow not found"})
     }
 })

@@ -13,7 +13,7 @@ generator client {
 model User {
   id                   String           @id @default(uuid())
   usermail             String           @unique
-  name                 String
+  name                 String 
   password             String
   personalWorkspaceId  String?
 
@@ -21,10 +21,58 @@ model User {
   files                File[]           // One-to-many relation with files
   folders              Folder[]         // One-to-many relation with folders
   recentlyViewed       RecentlyViewed[] // One-to-many relation with recently viewed items
-  assignments          Assignment[]
-  workflowsCreated     Workflows[]      @relation("CreatorRelation") // Workflows where this user is the creator
-  workflowsAssigned    Workflows[]      @relation("AssigneeRelation") // Workflows where this user is the assignee
+    // One-to-Many Relation: Creator Relation
+  workflowsCreated     Workflows[]       @relation("CreatorRelation")
+  workflowAssigned     Workflows[]       @relation("AssigneeRelation")
+
+  // Many-to-Many Relation: Assignee Relation
+  assignmentsCreated   Assignment[]
+  approvedWorkflows    ApprovalRecord[]
 }
+
+model Workflows {
+  id                  Int                @id @default(dbgenerated("(floor(random() * (9999999 - 1000000 + 1)) + 1000000)::int")) @unique
+  status              String             @default("on time")
+  dueDate             DateTime?
+  workflowName        String
+  currentStep         String?
+  startDate           DateTime           @default(now())
+  creatorId           String
+  currentAssigneeId   String?
+
+  // One-to-Many Relation: Creator
+  creator             User               @relation("CreatorRelation", fields: [creatorId], references: [id])
+  currentAssigneeUser User?              @relation("AssigneeRelation", fields: [currentAssigneeId], references: [id])
+  files               File[]
+  // Many-to-Many Relation: Assignees
+  assignees           Assignment[] 
+  Approvers           ApprovalRecord[]
+}
+
+
+model Assignment {
+  userId        String
+  workflowId    Int
+  order         Int                 @default(1)
+  // Relations
+  user          User                @relation(fields: [userId], references: [id])
+  workflow      Workflows           @relation(fields: [workflowId], references: [id])
+
+  @@id([userId, workflowId]) // Composite primary key
+}
+
+model ApprovalRecord {
+  id                 Int                 @id @default(autoincrement())
+  userId             String              // The user who approved
+  workflowId         Int                 // The workflow approved
+  approvalDate       DateTime            @default(now()) // Date of approval
+  // Relations
+  user               User                @relation(fields: [userId], references: [id])
+  workflow           Workflows           @relation(fields: [workflowId], references: [id])
+
+  @@unique([userId, workflowId])         // Prevent duplicate approvals by the same user
+}
+
 
 model Folder {
   id               String           @id @default(uuid())
@@ -58,7 +106,7 @@ model File {
   updatedAt        DateTime         @updatedAt
   RecentlyViewed   RecentlyViewed[]
   worflows         Workflows?        @relation(fields: [workflowId], references: [id])
-  workflowId       String?
+  workflowId       Int?
 
   @@unique([ parentFolderId, name])
 }
@@ -75,31 +123,5 @@ model RecentlyViewed {
   @@unique([userId, fileId]) // Ensures unique recent view entries
 }
 
-model Assignment {
-  id               String           @id @default(uuid())
-  name             String
-  location         String
-  dueDate          DateTime?
-  priority         String           @default("medium")
-  status           String           @default("ok")
-  userId           String
-  user             User             @relation(fields: [userId], references: [id])
-}
 
 
-model Workflows {
-  id            String   @id @default(uuid())
-  status        String   @default("on time")
-  dueDate       DateTime?
-  creatorId     String
-  assigneeId    String
-  workflowName  String
-  currentStep   String
-  startDate     DateTime @default(now())
-
-  // Relations
-  creator       User     @relation("CreatorRelation", fields: [creatorId], references: [id])
-  assignee      User     @relation("AssigneeRelation", fields: [assigneeId], references: [id])
-
-  files         File[]
-}

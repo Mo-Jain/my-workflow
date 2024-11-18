@@ -35,7 +35,7 @@ favoritesRouter.get("/",middleware, async (req, res) => {
             res.status(404).json({ message: "No favorites found" });
         }
 
-        const favoriteFolders = folders.map((folder:any) => ({
+        const favoriteFolders = folders.map((folder) => ({
             id: folder.id,
             name: folder.name,
             type: "folder",
@@ -43,7 +43,7 @@ favoritesRouter.get("/",middleware, async (req, res) => {
             isFavorite: folder.isFavorite
         }))
 
-        const favoriteFiles = files.map((file:any) => ({
+        const favoriteFiles = files.map((file) => ({
             id: file.id,
             name: file.name,
             type: file.type,

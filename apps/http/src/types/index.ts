@@ -47,7 +47,7 @@ export const updateFileSchema = z.object({
   name: z.string(),
   isFavorite: z.boolean().optional(),
   type: z.string().optional(),
-  workflowId: z.string().optional(),
+  workflowId: z.number().optional(),
 })
 
 export const createFavoriteSchema = z.object({
@@ -65,6 +65,7 @@ export const createWorkflowSchema = z.object({
   dueDate: z.date().optional(),
   workflowName: z.string(),
   currentStep: z.string(),
+  selectedFilesId: z.array(z.string()),
 })
 
 export const updateWorkflowSchema = z.object({
@@ -73,11 +74,7 @@ export const updateWorkflowSchema = z.object({
 })
 
 export const createAssignmentSchema = z.object({
-  name: z.string(),
-  location: z.string(),
-  dueDate: z.date().optional(),
-  priority: z.string().optional(),
-  status: z.string().optional(),
+  Aprovers: z.array(z.string()),
 })
 
 export const updateAssignmentSchema = z.object({

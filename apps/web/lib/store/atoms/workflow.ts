@@ -4,7 +4,6 @@ interface Item {
   id: string,
   status: string,
   dueDate: Date,
-  type: string,
   workflowName: string,
   currentStep: string,
   assignedTo: string,

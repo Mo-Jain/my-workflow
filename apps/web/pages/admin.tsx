@@ -121,7 +121,8 @@ export default function Admin(){
       await deleteFunction("recentlyViewed",setRecentlyViewedList,id);
   }
   async function deleteAssignment(id:string){
-      await deleteFunction("assignments",setAssignmentsList,id);
+      // await deleteFunction("assignments",setAssignmentsList,id);
+      console.log("deleted")
   }
   async function deleteWorkflow(id:string){
       await deleteFunction("workflows",setWorkflowList,id);

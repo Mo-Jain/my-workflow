@@ -177,8 +177,8 @@ router.get("/enterprise",middleware, async (req, res) => {
             return;
         }
 
-        const enterpriseFolder = enterprise.subfolders.map((folder:any)=>formatItem(folder, true));
-        const enterpriseFiles = enterprise.files.map((file: any) => formatItem(file, false));
+        const enterpriseFolder = enterprise.subfolders.map((folder)=>formatItem(folder, true));
+        const enterpriseFiles = enterprise.files.map((file) => formatItem(file, false));
 
         res.json({
             enterpriseFolder,
@@ -214,8 +214,8 @@ router.get("/personal",middleware, async (req, res) => {
         return;
     }
 
-    const personalFolder = personalWorkspace.subfolders.map((folder: any) => formatItem(folder, true));
-    const personalFiles = personalWorkspace.files.map((file: any) => formatItem(file, false));
+    const personalFolder = personalWorkspace.subfolders.map((folder) => formatItem(folder, true));
+    const personalFiles = personalWorkspace.files.map((file) => formatItem(file, false));
 
     res.json({
         personalFolder,
@@ -276,8 +276,8 @@ router.get("/userGuide",middleware, async (req, res) => {
             return
         }
 
-        const folderData = userGuide.subfolders.map((folder:any) => formatItem(folder, true));
-        const fileData = userGuide.files.map((file:any) => formatItem(file, false));
+        const folderData = userGuide.subfolders.map((folder) => formatItem(folder, true));
+        const fileData = userGuide.files.map((file) => formatItem(file, false));
         res.json({
             folderData,
             fileData,

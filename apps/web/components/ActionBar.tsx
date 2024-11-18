@@ -211,6 +211,7 @@ const ActionBar = (
         const res = await axios.post(`${BASE_URL}/api/v1/workflow`, {
           workflowName: "30079647 "+"NFA Form - "+formattedDate,
           currentStep: "NFA Form - "+formattedDate,
+          selectedFilesId: selectedItems
         }, {
           headers: {
               "Content-type": "application/json",
@@ -218,33 +219,19 @@ const ActionBar = (
           }
         });
 
-        const workflowId = res.data.workflow.id;
         
-        for(const selectedItem of selectedItems){
-          const name = items.filter((item) => item.id === selectedItem)[0].name
-          await axios.put(`${BASE_URL}/api/v1/file/${selectedItem}`, {
-            name: name,
-            workflowId: workflowId
-          }, {
-            headers: {
-                "Content-type": "application/json",
-                "Authorization": `Bearer ${localStorage.getItem("token")}`
-            }
-          });
-        }
-
+        console.log("res.data :",res.data.workflow);
+    
         const newWorkflow = {
           id: res.data.workflow.id,
           status: res.data.workflow.status,
           dueDate: res.data.workflow.dueDate,
-          type: res.data.workflow.workflowName,
           workflowName: res.data.workflow.workflowName,
           currentStep: res.data.workflow.currentStep,
-          assignedTo: res.data.workflow.assignee.name,
+          assignedTo: res.data.workflow.currentAssigneeUser.name,
           startDate: res.data.workflow.startDate,
-          files: res.data.files
+          files: res.data.workflow.files
         }
-        console.log("res.data :",res.data);
         console.log("newWorkflow :",newWorkflow);
         const assignments = {
           id:newWorkflow.id,
