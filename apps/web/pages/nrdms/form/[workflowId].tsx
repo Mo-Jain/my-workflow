@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -13,7 +14,91 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import Image from "next/image"
-import logo from "../public/logo.png"
+import logo from "../../../public/logo.png"
+import { useParams } from "next/navigation"
+import axios from "axios"
+import { BASE_URL } from "@/next.config"
+import { Dialog } from "@radix-ui/react-dialog"
+import { DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Cross, Crosshair, CrossIcon, LucideCross, Plus } from "lucide-react"
+import { useRouter } from "next/router"
+
+const CompanyCodes = [
+  {
+    id: 1,
+    name: "Adani Power Limited",
+    code: "5500"
+  },
+  {
+    id: 2,
+    name: "Kutch Copper Limited",
+    code: "1980"
+  },
+  {
+    id: 3,
+    name: "Adani Transmission Limited",
+    code: "2900"
+  },
+  {
+    id: 4,
+    name: "Adani Solar Limited",
+    code: "4300"
+  },
+  {
+    id: 5,
+    name: "Adani Enterprises Limited",
+    code: "1000"
+  }
+]
+
+const DepartmentCodes = [
+  {
+    id: 1,
+    name: "Information Technology",
+    code: "IT"
+  },
+  {
+    id: 2,
+    name: "Human Resources",
+    code: "HR"
+  },
+  {
+    id: 3,
+    name: "Finance",
+    code: "F&A"
+  },
+  {
+    id: 4,
+    name: "Buisness Development",
+    code: "BD"
+  },
+  {
+    id: 5,
+    name: "Marketing",
+    code: "Marketing"
+  },
+  {
+    id: 6,
+    name: "Sales",
+    code: "Sales"
+  },
+  {
+    id: 7,
+    name: "Operations",
+    code: "OPS"
+  },
+  {
+    id: 8,
+    name: "Project Management",
+    code: "PM"
+  },
+  {
+    id: 9,
+    name: "Projects",
+    code: "PROJ"
+  }
+]
+
 
 export default function NFAForm() {
   const [formData, setFormData] = React.useState({
@@ -29,19 +114,54 @@ export default function NFAForm() {
     to: "",
     project: "",
     remarks: "",
-    finalApproval: "",
-    notification: "",
+    finalApproval: "no",
+    notification: "no",
   })
 
-  const [multipleWorkflowRole,setMultipleWorkflowRole] = React.useState<string>();
-  const [docSetType,setDocSetType] = React.useState<string>();
-  const [departmentCode,setDepartmentCode] = React.useState<string>();
-  const [companyCode,setCompanyCode] = React.useState<string>();
-  const [activity,setActivity] = React.useState<string>();
+  const [multipleWorkflowRole,setMultipleWorkflowRole] = useState<string>();
+  const [docSetType,setDocSetType] = useState<string>();
+  const [departmentCode,setDepartmentCode] = useState<string | undefined>();
+  const [companyCode,setCompanyCode] = useState<string>();
+  const [activity,setActivity] = useState<string>();
+  const workflowIdObj = useParams();
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [workflowRole,setWorkflowRole] = React.useState("");
+  const router = useRouter();
 
-  React.useEffect(() => {
-    console.log(formData);
-  }, [formData])
+ 
+
+  useEffect(() => {
+    if(formData.companyName){
+      setCompanyCode(CompanyCodes.filter(company => company.name === formData.companyName)[0].code)
+    }
+   
+  }, [formData.companyName])
+
+  useEffect(() => {
+    if(formData.department){
+      setDepartmentCode(DepartmentCodes.filter(department => department.name === formData.department)[0].code)
+    }
+  }, [formData.department])
+
+  useEffect(() => {
+    if(!workflowIdObj || !workflowIdObj?.workflowId ) return;
+    async function fetchData() {
+        try {
+          const res = await axios.get(`${BASE_URL}/api/v1/workflow/${workflowIdObj.workflowId}`,{
+            headers:{
+              authorization : `Bearer `+ localStorage.getItem('token')
+            }
+          })
+          console.log(res.data.workflow)
+          setDocSetType(res.data.workflow.type);
+        }
+        catch (error) {
+          console.log(error);
+        }
+      }
+      fetchData();
+
+  }, [workflowIdObj])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -59,16 +179,34 @@ export default function NFAForm() {
   }
 
   const generateNumber = () => {
-    const number = Math.random().toString(36).substring(7).toUpperCase()
+    if( !departmentCode || !companyCode || formData.site === "") {
+        setIsDialogOpen(true);
+        return
+    };
+    const number = companyCode + "-" + departmentCode + "-" + formData.site + "-" + (new Date().toISOString().slice(0, 7)) + "-" + Math.floor(Math.random() * 1000);
     setFormData(prevData => ({
       ...prevData,
-      referenceNumber: `REF-${number}`
+      referenceNumber: number
     }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    try{
+      const res = await axios.post(`${BASE_URL}/api/v1/workflowdata/${workflowIdObj.workflowId}`, formData, {
+        headers:{
+          authorization : `Bearer `+ localStorage.getItem('token')
+        }
+      })
+
+      console.log(res.data);
+
+      router.push("/")
+    }
+    catch(error){
+      console.log(error)
+    }
     
   }
 
@@ -105,6 +243,7 @@ export default function NFAForm() {
               <Label htmlFor="clauseNumber" className="block h-8 flex items-center justify-end text-xs">Clause Number<span className="text-red-500">*</span> </Label>
               <Label htmlFor="clauseNumber" className="block h-8 flex items-center justify-end text-xs"></Label>
               <Label htmlFor="workflowType" className="block h-8 flex items-center justify-end text-xs">Workflow Type <span className="text-red-500">*</span></Label>
+              <Label htmlFor="workflowRole" className="block h-8 flex items-center justify-end text-xs">Workflow Role</Label>              
               <Label htmlFor="multipleWorkflowRole" className="block h-20 pt-2 flex text-right items-start justify-end text-xs">Multiple Workflow Role <span className="text-red-500">*</span></Label>
               <Label htmlFor="docSetType" className="block h-8 flex items-center justify-end text-xs">DocSet Type <span className="text-red-500">*</span></Label>
               <Label htmlFor="subject" className="block h-8 flex items-center justify-end text-xs">Subject </Label>
@@ -122,9 +261,15 @@ export default function NFAForm() {
                   <SelectValue placeholder="Select Department" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="it" className="w-full h-8 text-xs">Information Technology</SelectItem>
-                  <SelectItem value="hr" className="w-full h-8 text-xs">Human Resources</SelectItem>
-                  <SelectItem value="finance">Finance</SelectItem>
+                  <SelectItem value="Information Technology" className="w-full h-8 text-xs">Information Technology</SelectItem>
+                  <SelectItem value="Human Resources" className="w-full h-8 text-xs">Human Resources</SelectItem>
+                  <SelectItem value="Finance" className="w-full h-8 text-xs">Finance</SelectItem>
+                  <SelectItem value="Buisness Development" className="w-full h-8 text-xs">Buisness Development</SelectItem>
+                  <SelectItem value="Marketing" className="w-full h-8 text-xs">Marketing</SelectItem>
+                  <SelectItem value="Sales" className="w-full h-8 text-xs">Sales</SelectItem>
+                  <SelectItem value="Operations" className="w-full h-8 text-xs">Operations</SelectItem>
+                  <SelectItem value="Project Management" className="w-full h-8 text-xs">Project Management</SelectItem>
+                  <SelectItem value="Projects" className="w-full h-8 text-xs">Projects</SelectItem>
                 </SelectContent>
               </Select>
               <Select required value={formData.companyName} onValueChange={handleSelectChange("companyName")}>
@@ -132,8 +277,11 @@ export default function NFAForm() {
                   <SelectValue placeholder="Select Company" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="adani" className="w-full h-8 text-xs">Adani Corporation</SelectItem>
-                  <SelectItem value="subsidiary" className="w-full h-8 text-xs">Subsidiary Co.</SelectItem>
+                  <SelectItem value="Adani Power Limited" className="w-full h-8 text-xs">Adani Power Limited</SelectItem>
+                  <SelectItem value="Kutch Copper Limited" className="w-full h-8 text-xs">Kutch Copper Limited</SelectItem>
+                  <SelectItem value="Adani Transmission Limited" className="w-full h-8 text-xs">Adani Transmission Limited</SelectItem>
+                  <SelectItem value="Adani Solar Limited" className="w-full h-8 text-xs">Adani Solar Limited</SelectItem>
+                  <SelectItem value="Adani Enterprises Limited" className="w-full h-8 text-xs">Adani Enterprises Limited</SelectItem>
                 </SelectContent>
               </Select>
               <Select required value={formData.site} onValueChange={handleSelectChange("site")}>
@@ -141,8 +289,18 @@ export default function NFAForm() {
                   <SelectValue placeholder="Select Site" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="site1" className="w-full h-8 text-xs">Site 1</SelectItem>
-                  <SelectItem value="site2" className="w-full h-8 text-xs">Site 2</SelectItem>
+                  <SelectItem value="ATMSL" className="w-full h-8 text-xs">ATMSL</SelectItem>
+                  <SelectItem value="Bailadila" className="w-full h-8 text-xs">Bailadila</SelectItem>
+                  <SelectItem value="Ballada" className="w-full h-8 text-xs">Ballada</SelectItem>
+                  <SelectItem value="Bhubneshwar" className="w-full h-8 text-xs">Bhubneshwar</SelectItem>
+                  <SelectItem value="Bijahan" className="w-full h-8 text-xs">Bijahan</SelectItem>
+                  <SelectItem value="Bisrampur" className="w-full h-8 text-xs">Bisrampur</SelectItem>
+                  <SelectItem value="Chitrakoot" className="w-full h-8 text-xs">Chitrakoot</SelectItem>
+                  <SelectItem value="Corporate" className="w-full h-8 text-xs">Corporate</SelectItem>
+                  <SelectItem value="Dharmapur" className="w-full h-8 text-xs">Dharmapur</SelectItem>
+                  <SelectItem value="Dhupguri" className="w-full h-8 text-xs">Dhupguri</SelectItem>
+                  <SelectItem value="Gaya" className="w-full h-8 text-xs">Gaya</SelectItem>
+                  <SelectItem value="Mundra" className="w-full h-8 text-xs">Mundra</SelectItem>
                 </SelectContent>
               </Select>
               <Input id="referenceNumber" name="referenceNumber" value={formData.referenceNumber} onChange={handleInputChange} required className="w-full h-8 text-xs" />
@@ -176,23 +334,24 @@ export default function NFAForm() {
                   <SelectItem value="parallel" className="w-full h-8 text-xs">Flexi-flow</SelectItem>
                 </SelectContent>
               </Select>
+              <Input id="workflowRole" name="workflowRole" value={workflowRole} onChange={(e) => setWorkflowRole(e.target.value)} className="w-full h-8 text-xs"/>
               <div className="col-span-3 space-y-2">
                 <Textarea 
                   id="multipleWorkflowRole" 
                   name="multipleWorkflowRole" 
                   value={multipleWorkflowRole} 
                   onChange={(e) => setMultipleWorkflowRole(e.target.value)}
-                  required 
+                   
                   className="min-h-[5rem] max-h-20 text-xs col-span-1 space-y-2" 
                 />
               </div>
-              <Select required value={docSetType} onValueChange={(value) => setDocSetType(value)}>
-                <SelectTrigger className="w-full h-8 text-xs">
+              <Select required value={docSetType} disabled={docSetType? true : false} >
+                <SelectTrigger className="w-full h-8 text-xs cursor-not-allowed disabled:bg-gray-400 disabled:text-black" >
                   <SelectValue placeholder="Select DocSet Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="nfa" className="w-full h-8 text-xs">NFA</SelectItem>
-                  <SelectItem value="letter" className="w-full h-8 text-xs">Letter</SelectItem>
+                  <SelectItem value="NFA" className="w-full h-8 text-xs">NFA</SelectItem>
+                  <SelectItem value="Letter" className="w-full h-8 text-xs">Letter</SelectItem>
                 </SelectContent>
               </Select>
               <Input id="subject" name="subject" value={formData.subject} onChange={handleInputChange} className="w-full h-8 text-xs" />
@@ -231,8 +390,8 @@ export default function NFAForm() {
               <div className="h-8"></div> {/* Spacer for 9th row */}
               <div className="h-8"></div> {/* Spacer for 10th row */}
               <div className="h-8"></div> {/* Spacer for 11th row */}
-              <Label htmlFor="to" className="block h-8 flex items-center justify-end text-xs">To</Label>
               <div className="h-8"></div> {/* Spacer for 12th row */}
+              <Label htmlFor="to" className="block h-8 flex items-center justify-end text-xs">To</Label>
               <div className="h-8"></div> {/* Spacer for 13th row */}
               <div className="h-8"></div> {/* Spacer for 14th row */}
               <div className="h-8"></div> {/* Spacer for 15th row */}
@@ -242,8 +401,8 @@ export default function NFAForm() {
             {/* Column 4 - Additional Fields */}
             <div className="col-span-3 space-y-2">
               <div className="h-8"></div> {/* Spacer for 1st row */}
-              <Input id="departmentCode" name="departmentCode" value={departmentCode} onChange={() => setDepartmentCode(departmentCode)} className="w-full h-8 text-xs" />
-              <Input id="companyCode" name="companyCode" value={companyCode} onChange={() => setCompanyCode(companyCode)} className="w-full h-8 text-xs" />
+              <Input id="departmentCode" name="departmentCode" value={departmentCode} className="w-full h-8 text-xs cursor-not-allowed" readOnly/>
+              <Input id="companyCode" name="companyCode" value={companyCode} className="w-full h-8 text-xs cursor-not-allowed " readOnly />
               <div className="h-8"></div> {/* Spacer for 4th row */}
               <div className="h-8"></div> {/* Spacer for 5th row */}
               <div className="h-8"></div> {/* Spacer for 6th row */}
@@ -252,8 +411,8 @@ export default function NFAForm() {
               <Button type="button" variant="outline" className="w-1/3 h-8 text-xs">Remove all approvers</Button>
               <div className="h-8"></div> {/* Spacer for 10th row */}
               <div className="h-8"></div> {/* Spacer for 11th row */}
-              <Input id="to" name="to" value={formData.to} onChange={handleInputChange} className="w-full h-8 text-xs" />
               <div className="h-8"></div> {/* Spacer for 12th row */}
+              <Input id="to" name="to" value={formData.to} onChange={handleInputChange} className="w-full h-8 text-xs" />
               <div className="h-8"></div> {/* Spacer for 13th row */}
               <div className="h-8"></div> {/* Spacer for 14th row */}
               <div className="h-8"></div> {/* Spacer for 15th row */}
@@ -267,6 +426,26 @@ export default function NFAForm() {
           </div>
         </form>
       </div>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="sm:max-w-[425px] bg-white text-black">
+            <DialogHeader>
+              <DialogTitle>
+                <div className="flex items-center gap-2 mb-2">
+                <span className="p-[1px] rounded-full bg-red-500"><Plus className="h-5 w-5 text-white stroke-2 rotate-45" /></span>
+                <span>Error</span>
+                </div>
+              </DialogTitle>
+              <DialogDescription>
+                Select any Department, Company and Site first.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button type="submit" className={`text-white bg-blue-500 hover:bg-blue-600`} onClick={() => {
+                setIsDialogOpen(false)
+              }}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
     </div>
   )
 }

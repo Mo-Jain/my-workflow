@@ -66,19 +66,40 @@ export const createWorkflowSchema = z.object({
   workflowName: z.string(),
   currentStep: z.string(),
   selectedFilesId: z.array(z.string()),
+  type: z.string(),
 })
 
 export const updateWorkflowSchema = z.object({
   status: z.string().optional(),
-  assigneeId: z.string().optional(),
 })
 
 export const createAssignmentSchema = z.object({
-  Aprovers: z.array(z.string()),
+  Aprovers: z.array(z.object({userId: z.string(),step:z.string()})),
 })
 
 export const updateAssignmentSchema = z.object({
-  location: z.string(),
+  comments: z.string(),
+})
+
+export const deleteAssignmentSchema = z.object({
+  userId: z.string(),
+})
+
+export const createWorkflowDataSchema = z.object({
+  workflowName: z.string(),
+  department: z.string(),
+  companyName: z.string(),
+  site: z.string(),
+  referenceNumber: z.string(),
+  sbu: z.string(),
+  clauseNumber: z.string(),
+  workflowType: z.string(),
+  subject: z.string().optional(),
+  to: z.string().optional(),
+  project: z.string().optional(),
+  remarks: z.string().optional(),
+  finalApproval: z.string().optional(),
+  notification: z.string().optional()
 })
 
 

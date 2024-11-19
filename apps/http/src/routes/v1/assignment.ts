@@ -47,13 +47,14 @@ assignmentRouter.post("/:workflowId", middleware, async (req, res) => {
     try {
         
         const approverData = parsedData.data.Aprovers.map((approver, index) => ({
-            userId: approver,
+            userId: approver.userId,
             workflowId: parseInt(req.params.workflowId),
-            order: index+1
+            order: index+1,
+            step: approver.step
         }))
 
-        const assignment = await client.assignment.createMany({
-                    data: approverData
+        const assignment = await client.approvalRecord.createMany({
+                data: approverData
         })
 
         res.json({
@@ -75,31 +76,27 @@ assignmentRouter.put("/:workflowId", middleware, async (req, res) => {
 
     try {
 
-         const currentAssignment = await client.assignment.findFirst({
-            where: {
-                workflowId: parseInt(req.params.workflowId),
-                userId:req.userId,
+         const cuurentApprover = await client.approvalRecord.update({
+                where: {
+                    userId_workflowId: {workflowId: parseInt(req.params.workflowId), userId: req.userId!},
+                },
+              data: {
+                comments: parsedData.data.comments,
+                approvalDate: new Date(),
               }
           });
 
-          if(!currentAssignment){
+          if(!cuurentApprover){
             res.status(404).json({message: "Assignment not found"})
             return
           }
-
-         await client.approvalRecord.create({
-            data: {
-              workflowId: parseInt(req.params.workflowId),
-              userId:req.userId!,
-            },
-          });
         
           // Get the next assignee based on the current order
           // If there is no next assignee, set the status to approved
-          const nextAssignee = await client.assignment.findFirst({
+          const nextAssignee = await client.approvalRecord.findFirst({
             where: {
               workflowId : parseInt(req.params.workflowId),
-              order: currentAssignment.order + 1,
+              order: cuurentApprover.order + 1,
             },
           });
         

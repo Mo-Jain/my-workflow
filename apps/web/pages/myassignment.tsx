@@ -87,7 +87,7 @@ export default function MyAssignment() {
             </TableHeader>
             <TableBody>
               {assignments.map((assignment) => (
-                <TableRow className="cursor-pointer" key={assignment.id} onClick={()=> router.push('/nfaform')}>
+                <TableRow className="cursor-pointer" key={assignment.id} onClick={()=> router.push("/nrdms/form/"+assignment.id)}>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {getIcon('workflow',"h-4 w-4 text-blue-500")}

@@ -5,7 +5,7 @@ import { createWorkflowSchema, updateWorkflowSchema } from "../../types";
 
 export const workflowRouter = Router();
 
-workflowRouter.get("/", middleware, async (req, res) => {
+workflowRouter.get("/all", middleware, async (req, res) => {
     try {
 
         const workflows = await client.workflows.findMany({
@@ -14,7 +14,7 @@ workflowRouter.get("/", middleware, async (req, res) => {
             },
             include: {
                 files: true,
-                currentAssigneeUser: true
+                currentAssigneeUser: true,
             }
         })
 
@@ -26,9 +26,10 @@ workflowRouter.get("/", middleware, async (req, res) => {
             currentStep: workflow.currentStep,
             assignedTo: workflow.currentAssigneeUser?.name,
             startDate: workflow.startDate,
-            files: workflow.files
+            files: workflow.files,
+            stopDate : workflow.stopDate ?? null
         }))
-
+        
         res.json({
             workflowData
         })
@@ -37,6 +38,54 @@ workflowRouter.get("/", middleware, async (req, res) => {
         res.status(400).json({ message: "Internal server error" })
     }
 })
+
+workflowRouter.get("/report", middleware, async (req, res) => {
+    try {
+        const workflowReport = await client.workflows.findMany({
+            where: {
+                creatorId: req.userId,
+            },
+            include: {
+                workflowData: true,
+                creator: true,
+            }
+        })
+    
+        res.json({
+            workflowReport
+        })
+    } catch (e) {
+        console.error(e);
+        res.status(400).json({ message: "Internal server error" })
+    }
+})
+
+
+workflowRouter.get("/:id", middleware, async (req, res) => {
+    try {
+        const workflow = await client.workflows.findFirst({
+            where: {
+                id: parseInt(req.params.id)
+            },
+            include: {
+                files: true
+            }
+        })
+
+        if (!workflow) {
+            res.status(404).json({ message: "Workflow not found" })
+            return
+        }
+
+        res.json({
+            workflow
+        })
+    } catch (e) {
+        console.error(e);
+        res.status(400).json({ message: "Internal server error" })
+    }
+})
+
 
 workflowRouter.post("/", middleware, async (req, res) => {
     const parsedData = createWorkflowSchema.safeParse(req.body)
@@ -56,9 +105,10 @@ workflowRouter.post("/", middleware, async (req, res) => {
                 workflowName: parsedData.data.workflowName,
                 currentStep: parsedData.data.currentStep,
                 currentAssigneeId: req.userId,
-                assignees: {
+                type: parsedData.data.type,
+                approvers: {
                     create: [
-                    { userId: req.userId! }, // Add the creator as an initial assignee if needed
+                    { userId: req.userId!,step:parsedData.data.currentStep }, // Add the creator as an initial assignee if needed
                                                 // Add other assignees as required
                         ],
                     },
@@ -89,26 +139,27 @@ workflowRouter.put("/:id", middleware, async (req, res) => {
         return
     }
 
-    const data = parsedData.data;
-    
-    let updatedData = {};
-
-    if(data.assigneeId && !data.status){
-        updatedData = { assigneeId:data.assigneeId }
-    }else if(!data.assigneeId && data.status){
-        updatedData = { status:data.status }
-    }else if(data.assigneeId && data.status){
-        updatedData = { assigneeId:data.assigneeId, status:data.status }
-    }
-
     try {
         
         await client.workflows.update({
                 where: {
                     id: parseInt(req.params.id)
                 },
-                data: updatedData
+                data: {
+                    status:parsedData.data.status,
+                    currentAssigneeId:null,
+                    currentStep:null,
+                    stopDate:new Date(),
+                }
             })
+        
+        if(parsedData.data.status === "stopped"){
+            await client.workflowData.deleteMany({
+                where: {
+                    workflowId: parseInt(req.params.id)
+                }
+            })
+        }
 
         res.json({
             message: "Workflow updated successfully",
@@ -121,13 +172,15 @@ workflowRouter.put("/:id", middleware, async (req, res) => {
 
 workflowRouter.delete("/:id", middleware, async (req, res) => {
     try {
-        await client.assignment.deleteMany({
+        
+
+        await client.approvalRecord.deleteMany({
             where:{
                 workflowId:parseInt(req.params.id)
             }
         });
 
-        await client.approvalRecord.deleteMany({
+        await client.workflowData.deleteMany({
             where:{
                 workflowId:parseInt(req.params.id)
             }

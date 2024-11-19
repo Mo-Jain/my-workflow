@@ -2,7 +2,7 @@
 import { Router } from "express";
 import jwt from "jsonwebtoken";
 
-import { JWT_PASSWORD } from "../../config";
+import { ENTERPRISE_FOLDER_ID, JWT_PASSWORD, USER_GUIDE_FOLDER_ID } from "../../config";
 import { SigninSchema, SignupSchema } from "../../types";
 import {hash, compare} from "../../scrypt";
 import client from "@repo/db/client";
@@ -14,6 +14,7 @@ import { recentlyViewedRouter } from "./recentlyviewed";
 import { assignmentRouter } from "./assignment";
 import { workflowRouter } from "./workflow";
 import { adminRouter } from "./admin";
+import workflowDataRouter from "./workflowdata";
 
 export const router = Router();
 
@@ -255,7 +256,7 @@ router.get("/userGuide",middleware, async (req, res) => {
     try {
         const userGuide = await client.folder.findFirst({
             where:{
-                parentFolderId:"d810a99b-183e-4e96-8a1e-264d612dcafb",
+                parentFolderId:ENTERPRISE_FOLDER_ID,
                 name:"user_guide"
             },
             include: {
@@ -310,8 +311,7 @@ router.delete("/me", middleware, async (req, res) => {
         await client.file.deleteMany({ where: { creatorId: req.userId } });
         await client.folder.deleteMany({ where: { creatorId: req.userId } });
         await client.recentlyViewed.deleteMany({ where: { userId: req.userId } });
-        await client.workflows.deleteMany({ where: { userId: req.userId } });
-        await client.assignment.deleteMany({ where: { userId: req.userId } });
+        await client.workflows.deleteMany({ where: { creatorId: req.userId } });
 
         // Finally, delete the user after all related data is deleted
         await client.user.delete({
@@ -341,4 +341,5 @@ router.use("/recentlyviewed", recentlyViewedRouter);
 router.use("/assignment", assignmentRouter);
 router.use("/workflow", workflowRouter);
 router.use("/admin", adminRouter);
+router.use("/workflowdata", workflowDataRouter);
 

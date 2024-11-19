@@ -12,51 +12,33 @@ import { toaster } from "@/pages/admin"
 import axios from "axios"
 import { BASE_URL } from "@/next.config"
 import { assignmentState } from "@/lib/store/atoms/assignment"
-import { workflowState } from "@/lib/store/atoms/workflow"
+import { Workflow, workflowState } from "@/lib/store/atoms/workflow"
 import { on } from "events"
-import { workflowItems } from "@/lib/store/selectors/workflow"
+import { workflowItems } from "@/lib/store/selectors/workflow";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 
-interface Item {
-  id: string,
-  status: string,
-  dueDate: Date,
-  type: string,
-  workflowName: string,
-  currentStep: string,
-  assignedTo: string,
-  startDate: Date,
-  files: File[]
+export const getLongdate = (date:Date | null | undefined) => {
+  const possibleDate = new Date(date ? date: new Date());
+  return possibleDate.toLocaleString('default', { month: 'long' })+ " "+possibleDate.getDate()+ ", " +possibleDate.getFullYear()
 }
 
-interface File {
-  id: string;
-  name: string;
-  path: string;
-  type: string;
-  creatorId: string;
-  size: string;
-  parentFolderId: string | null;
-  isFavorite: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  workflowId: string | null;
-}
 
 export default function WorkflowPopup(
   {onClose,clickedItem,setClickedItem}:
   {
     onClose:()=>void,
-    clickedItem:Item | undefined,
-    setClickedItem:React.Dispatch<React.SetStateAction<Item | undefined>>
+    clickedItem:Workflow | undefined,
+    setClickedItem:React.Dispatch<React.SetStateAction<Workflow | undefined>>
   }
 ) {
-  console.log(clickedItem);
   const userName  =  useRecoilValue(userNameState);
   const [shortName,setShortName] = React.useState("");
   const setWorkflow = useSetRecoilState(workflowState);
   const setAssignments = useSetRecoilState(assignmentState);
   const workflows = useRecoilValue(workflowItems);
-
+  const [stopDate,setStopDate] = React.useState(new Date(clickedItem?.stopDate ?? new Date()));
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false)
+  const [action, setAction] = React.useState<"delete" | "stop">("stop");
 
   React.useEffect(() => {
     const name = userName;
@@ -66,6 +48,12 @@ export default function WorkflowPopup(
       setShortName(temp);
     }
   },[userName])
+
+  React.useEffect(() => {
+    setStopDate(new Date(clickedItem?.stopDate ?? new Date()));
+    console.log(clickedItem?.stopDate);
+  },[clickedItem?.stopDate])
+
 
   const handleStopWorkflow = async () => {
     try{
@@ -81,12 +69,13 @@ export default function WorkflowPopup(
       
       setWorkflow(prevWorkflows => ({
         ...prevWorkflows,
-        items: prevWorkflows.items.map(item => item.id === res.data.id ? { ...item, status: "stopped" } : item)
+        items: prevWorkflows.items.map(item => item.id === clickedItem?.id ? { ...item, status: "stopped",stopDate:new Date() } : item)
       }));
 
+      console.log("workflows :",workflows);
       setAssignments(prevAssignments => ({
         ...prevAssignments,
-        items: prevAssignments.items.map(item => item.id === res.data.id ? { ...item, status: "stopped" } : item)
+        items: prevAssignments.items.filter(item => item.id !== clickedItem?.id )
       }));
 
       
@@ -112,14 +101,9 @@ export default function WorkflowPopup(
       });
       toaster("workflow deleted",res.data.id,false);
 
-      setAssignments(prevAssignments => ({
-        ...prevAssignments,
-        items: prevAssignments.items.filter(item => item.id !== res.data.id)
-      }));
-
       setWorkflow(prevWorkflows => ({
         ...prevWorkflows,
-        items: prevWorkflows.items.filter(item => item.id !== res.data.id)
+        items: prevWorkflows.items.filter(item => item.id !== clickedItem?.id)
       }));
 
       setClickedItem(undefined);
@@ -127,6 +111,15 @@ export default function WorkflowPopup(
       onClose();
     }catch(e){
       toaster("delete",'',true);
+    }
+  }
+
+  const handleAction = async () => {
+    if(action === "delete"){
+      handleDeleteWorkflow();
+    }
+    else{
+      handleStopWorkflow();
     }
   }
 
@@ -144,6 +137,13 @@ export default function WorkflowPopup(
         <div className="grid grid-cols-[1fr,300px] gap-4 items-center">
           {/* Timeline and Current Step */}
           <div className="space-y-6">
+            {clickedItem?.status==="stopped" &&
+            //stopped as bold
+            <div>
+              <span className="font-bold text-base"> Stopped</span>
+              <span> on {getLongdate(clickedItem?.stopDate)}</span>
+            </div>
+            }
             <div className="relative pl-8">
               <div className="absolute left-3 top-0 bottom-0 w-[3px] bg-gray-500" />
               
@@ -171,13 +171,15 @@ export default function WorkflowPopup(
                   <ArrowBigRightDashIcon className={`absolute -left-[4px] z-10 h-20 w-20 ${clickedItem?.status!=="stopped"? "text-blue-500 fill-blue-500":"text-red-500 fill-red-500"} m-0`} />
                   <Card className={`relative -left-[7vw] rounded-none border-l-4 ${clickedItem?.status!=="stopped"? "border-l-blue-500":"border-l-red-500"}`}>
                     <CardContent className="p-4">
+                      {clickedItem?.status !== "stopped" &&
                       <div className={`mb-1 font-medium ${clickedItem?.status!=="stopped"? "text-blue-600":"text-red-600"}`}>Current Step</div>
+                      }
                       <div className="flex items-center justify-between">
                         <div className="flex  gap-2">
                           {getIcon(clickedItem ? clickedItem.status : "","h-5 w-5 text-blue-500")}
                           <div className="max-w-[200px]">
-                            <div className="font-medium overflow-hidden text-ellipsis whitespace-nowrap">{clickedItem?.currentStep}</div>
-                            <div className="text-sm text-muted-foreground">{clickedItem?.assignedTo}</div>
+                            <div className="font-medium overflow-hidden text-ellipsis whitespace-nowrap px-2 mr-6">{clickedItem?.workflowName ? clickedItem?.workflowName.split(" - ")[1] : ""}</div>
+                            <div className="text-sm text-muted-foreground p-2">{userName}</div>
                           </div>
                         </div>
                         <Badge variant="secondary" className={` ${clickedItem?.status === "on time" ? "bg-blue-50 text-blue-700" : "bg-red-50 text-red-700"}`}>
@@ -227,7 +229,9 @@ export default function WorkflowPopup(
                   
                   <div>
                     <div className="text-sm text-gray-500">Workflow Due date</div>
-                    <div className="font-medium">-</div>
+                    <div className="font-medium">
+                      { clickedItem?.dueDate ? getLongdate(clickedItem?.dueDate) : "-"}
+                    </div>
                   </div>
                   
                   <div>
@@ -243,7 +247,7 @@ export default function WorkflowPopup(
                           {shortName}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="font-medium">{clickedItem?.assignedTo}</span>
+                      <span className="font-medium">{userName}</span>
                     </div>
                   </div>
                   
@@ -273,18 +277,36 @@ export default function WorkflowPopup(
             </Tabs>
 
             {clickedItem?.status === "on time" ? <div className="mt-4">  
-              <Button className="w-full bg-blue-900 hover:bg-blue-800" onClick={handleStopWorkflow}>
+              <Button className="w-full bg-blue-900 hover:bg-blue-800" onClick={()=>{setAction("stop");setIsDialogOpen(true)}}>
                 Stop
               </Button>
             </div>
           :  
-            <Button className="w-full bg-red-900 hover:bg-blue-800" onClick={handleDeleteWorkflow}>
+            <Button className="w-full bg-red-900 hover:bg-blue-800" onClick={()=>{setAction("delete");setIsDialogOpen(true)}}>
                 Delete
             </Button>
           }
           </div>
         </div>
       </div>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="sm:max-w-[425px] bg-white text-black">
+            <DialogHeader>
+              <DialogTitle>{ action === "delete" ? "Delete" : "Stop Workflow"}</DialogTitle>
+              <DialogDescription>
+                { action === "delete" ? 
+                "Are you sure you want to delete these items?" : 
+                "Are you sure you want to stop a workflow?"}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button type="submit" className={`text-white ${action === "delete" ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"}`} onClick={() => {
+                handleAction();
+                setIsDialogOpen(false)
+              }}>{ action === "delete" ? "Delete" : "Stop"}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
     </div>
   )
 }

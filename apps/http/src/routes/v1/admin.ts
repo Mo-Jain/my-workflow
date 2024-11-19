@@ -1,7 +1,7 @@
 import { Router} from "express";
 import { middleware } from "../../middleware";
 import client from "@repo/db/client";
-import { createFavoriteSchema, createFolderSchema } from "../../types";
+import { createFavoriteSchema, createFolderSchema, deleteAssignmentSchema } from "../../types";
 
 export const adminRouter = Router();
 
@@ -105,27 +105,32 @@ adminRouter.get("/recentlyViewed",  async (req, res) => {
     }
 })
 
-adminRouter.get("/assignments", async (req, res) => {
+
+
+adminRouter.get("/workflowData",  async (req, res) => {
     try
     {
-        const assignments = await client.assignment.findMany({
+        const workflowData = await client.workflowData.findMany({
             include:{
-                user:true
+                user:true,
+                workflow:true
             }
         });
 
-        const assignmentData = assignments.map(assignment =>({...assignment,userName:assignment.user.name,from:assignment.user.name}))
+        const workflowDataData = workflowData.map(workflowData =>
+            ({...workflowData,
+                userName:workflowData.user.name,
+                name:workflowData.workflow.workflowName}))
 
         res.json({
-            assignmentData,
+            workflowDataData
         })
     }
     catch(e)
     {
-        res.status(400).json({message: "No Assignments found"})
+        res.status(400).json({message: "No Workflow Data found"})
     }
 })
-
 adminRouter.get("/workflows",  async (req, res) => {
     try
     {
@@ -145,6 +150,31 @@ adminRouter.get("/workflows",  async (req, res) => {
     {
         console.error(e);
         res.status(400).json({message: "No Workflows found"})
+    }
+})
+
+adminRouter.get("/approvalRecord",  async (req, res) => {
+    try
+    {
+        const approvalRecord = await client.approvalRecord.findMany({
+            include:{
+                user:true,
+                workflow:true   
+            }
+        }); 
+        const approvalRecordData = approvalRecord.map(approvalRecord =>
+            ({...approvalRecord,
+                userName:approvalRecord.user.name,
+                id:approvalRecord.userId+"-"+approvalRecord.workflowId,
+                name:approvalRecord.workflow.workflowName
+            }))
+        res.json({
+            approvalRecordData
+        })
+    }
+    catch(e)
+    {
+        res.status(400).json({message: "No Approval Record found"})
     }
 })
 
@@ -226,16 +256,22 @@ adminRouter.delete("/recentlyViewed/:id",  async (req, res) => {
     }
 })
 
-adminRouter.delete("/assignments/:id",  async (req, res) => {
+
+adminRouter.delete("/approvalRecord/:id",  async (req, res) => {
     try
     {
-        const assignments = await client.assignment.delete({
-            where:{
-                id:parseInt(req.params.id)
-            }
+        const parsedData = deleteAssignmentSchema.safeParse(req.body)
+        if (!parsedData.success) {
+            res.status(400).json({ message: "Wrong folder input format" })
+            return
+        }
+        const assignments = await client.approvalRecord.delete({
+            where: {
+                userId_workflowId: {workflowId: parseInt(req.params.id), userId: parsedData.data.userId}
+            },
         });
         res.json({
-            message:"Assignment deleted successfully",
+            message:"Approval Record deleted successfully",
             assignments
         })
     }
@@ -248,11 +284,7 @@ adminRouter.delete("/assignments/:id",  async (req, res) => {
 adminRouter.delete("/workflows/:id",  async (req, res) => {
     try
     {
-        await client.assignment.deleteMany({
-            where:{
-                workflowId:parseInt(req.params.id)
-            }
-        });
+        
 
         await client.approvalRecord.deleteMany({
             where:{
@@ -277,10 +309,28 @@ adminRouter.delete("/workflows/:id",  async (req, res) => {
     }
 })
 
+adminRouter.delete("/workflowData/:id",  async (req, res) => {
+    try
+    {
+        await client.workflowData.delete({
+            where:{
+                id:req.params.id
+            }
+        });
+        res.json({
+            message:"Workflow Data deleted successfully",
+            id: req.params.id
+        })
+    }
+    catch(e)
+    {
+        res.status(400).json({message: "Workflow Data not found"})
+    }
+})
+
 adminRouter.post("/enterprise",async (req, res) => {
     try
     {
-            
         let message = "Folder created successfully"
         const folder = await client.folder.create({
             data: {

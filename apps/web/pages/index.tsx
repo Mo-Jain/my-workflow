@@ -125,7 +125,7 @@ export default function Home() {
             </CardHeader>
             <CardContent className="h-[calc(100%-3rem)] bg-gray-100 flex flex-col items-center px-0 text-muted-foreground">
             {assignments.map((item) =>(
-              <div className="flex items-start w-full items-center gap-2 text-sm py-1 px-1">
+              <div className="flex items-start w-full cursor-pointer items-center gap-2 text-sm py-1 px-1" onClick={() => router.push("/nrdms/form/"+item.id)}>
                 {getIcon('workflow',"h-6 w-6 fill-green-400 shrink-0 ")}
                 <div className="border-b">
                   <div className="text-black max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap">
@@ -207,15 +207,15 @@ export default function Home() {
           {/* Enterprise */}
           <div className="bg-stone-700 cursor-pointer hover:bg-stone-800 hover:text-white text-white flex flex-col items-center justify-center"
                   onClick={()=>router.push('/enterprise')}>
-            <Folder className="h-12 w-12 p-2" />
+            <Folder className="h-12 w-12 p-2 fill-white stroke-0" />
             <span className="text-sm text-center">Enterprise Folder</span>
           </div>
 
           {/* ------------------------------------------------------------------------------- */}          
           {/* Personal Workspace */}
           <div className="bg-zinc-700 cursor-pointer hover:bg-zinc-800 hover:text-white text-white flex flex-col items-center justify-center"
-                  onClick={()=>router.push('/personalworkspace')}>
-            <Folder className="h-12 w-12 p-2" />
+                  onClick={()=>router.push('/personalworkspace ')}>
+            <Folder className="h-12 w-12 p-2 fill-white stroke-0" />
             <span className="text-sm text-center">Personal Workspace</span>
           </div>
 
@@ -223,15 +223,15 @@ export default function Home() {
           {/* User Guides */}
           <div className="bg-blue-700 cursor-pointer hover:bg-blue-800 hover:text-white text-white flex flex-col items-center justify-center"
                   onClick={()=>router.push('/userguide')}>
-            <Folder className="h-12 w-12 p-2" />
+            <Folder className="h-12 w-12 p-2 fill-white stroke-0" />
             <span className="text-sm text-center">User Guides</span>
           </div>
 
           {/* ------------------------------------------------------------------------------- */}          
           {/* NFA and Letters Workflow Report */}
           <div className="bg-purple-900 cursor-pointer hover:bg-purple-950 hover:text-white text-white flex flex-col items-center justify-center"
-                  onClick={()=>router.push('/nfareport')}>
-            <Folder className="h-12 w-12 p-2" />
+                  onClick={()=>router.push('/nrdms/report/page')}>
+            <Folder className="h-12 w-12 p-2 fill-white stroke-0" />
             <span className="text-sm text-center">NFA and Letters Workflow Report</span>
           </div>
           

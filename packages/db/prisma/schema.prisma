@@ -26,8 +26,8 @@ model User {
   workflowAssigned     Workflows[]       @relation("AssigneeRelation")
 
   // Many-to-Many Relation: Assignee Relation
-  assignmentsCreated   Assignment[]
   approvedWorkflows    ApprovalRecord[]
+  workflowData         workflowData[]
 }
 
 model Workflows {
@@ -39,38 +39,33 @@ model Workflows {
   startDate           DateTime           @default(now())
   creatorId           String
   currentAssigneeId   String?
-
+  stopDate            DateTime?
+  type                String      
+  approvalDate        DateTime?       
   // One-to-Many Relation: Creator
   creator             User               @relation("CreatorRelation", fields: [creatorId], references: [id])
   currentAssigneeUser User?              @relation("AssigneeRelation", fields: [currentAssigneeId], references: [id])
   files               File[]
   // Many-to-Many Relation: Assignees
-  assignees           Assignment[] 
-  Approvers           ApprovalRecord[]
+  approvers           ApprovalRecord[]
+  workflowData        workflowData[]    @relation("workflowData")
 }
 
-
-model Assignment {
-  userId        String
-  workflowId    Int
-  order         Int                 @default(1)
-  // Relations
-  user          User                @relation(fields: [userId], references: [id])
-  workflow      Workflows           @relation(fields: [workflowId], references: [id])
-
-  @@id([userId, workflowId]) // Composite primary key
-}
 
 model ApprovalRecord {
-  id                 Int                 @id @default(autoincrement())
   userId             String              // The user who approved
   workflowId         Int                 // The workflow approved
-  approvalDate       DateTime            @default(now()) // Date of approval
+  approvalDate       DateTime?             // Date of approval
+  assignedDate       DateTime            @default(now()) // Date of assignment
+  comments           String?
+  order              Int                 @default(1)
+  status             String?
+  step               String
   // Relations
   user               User                @relation(fields: [userId], references: [id])
   workflow           Workflows           @relation(fields: [workflowId], references: [id])
 
-  @@unique([userId, workflowId])         // Prevent duplicate approvals by the same user
+  @@id([userId, workflowId])         // Prevent duplicate approvals by the same user
 }
 
 
@@ -121,6 +116,29 @@ model RecentlyViewed {
   lastViewedAt     DateTime         @default(now())
 
   @@unique([userId, fileId]) // Ensures unique recent view entries
+}
+
+
+model workflowData {
+  id               String           @id @default(cuid())
+  workflowId       Int
+  workflow         Workflows         @relation("workflowData", fields: [workflowId], references: [id])
+  userId           String
+  user             User              @relation(fields: [userId], references: [id])
+  workflowType     String
+  workflowName     String
+  department       String
+  companyName      String
+  site             String
+  referenceNumber  String
+  sbu              String
+  clauseNumber     String
+  subject          String?
+  to               String?
+  project          String?
+  remarks          String?
+  finalApproval    Boolean          @default(false)
+  notification     Boolean          @default(false)
 }
 
 

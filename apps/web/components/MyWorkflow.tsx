@@ -16,45 +16,19 @@ import { workflowItems } from "@/lib/store/selectors/workflow"
 import { useRecoilValue } from "recoil"
 import WorkflowPopup from "./WorkflowPopup"
 import { Input } from "./ui/input"
+import { Workflow } from "@/lib/store/atoms/workflow"
 
 // Sample data - in a real app this would come from your backend
 
-
-
-interface Item {
-  id: string,
-  status: string,
-  dueDate: Date,
-  type: string,
-  workflowName: string,
-  currentStep: string,
-  assignedTo: string,
-  startDate: Date,
-  files: File[]
-}
-
-interface File {
-  id: string;
-  name: string;
-  path: string;
-  type: string;
-  creatorId: string;
-  size: string;
-  parentFolderId: string | null;
-  isFavorite: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  workflowId: string | null;
-}
 
 export default function Component(
   {onClose}:
   {onClose:()=>void}
 ) {
-  const [workflowsList, setWorkflowsList] = useState<Item[]>([]);
+  const [workflowsList, setWorkflowsList] = useState<Workflow[]>([]);
   const [workflowVisible, setWorkflowVisible] = useState(false);
   const workflows = useRecoilValue(workflowItems);
-  const [clickedItem, setClickedItem] = useState<Item>();
+  const [clickedItem, setClickedItem] = useState<Workflow>();
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "asc" | "desc";
@@ -63,9 +37,7 @@ export default function Component(
   useEffect(() => {
     if(!workflows[0]) return;
 
-    console.log(workflows);
     setWorkflowsList(workflows);
-    console.log(workflows);
   }, [workflows]);
 
   useEffect(() => {
@@ -94,7 +66,7 @@ export default function Component(
     setSortConfig({ key, direction });
   };
 
-  const handleClick = (item:Item) => {
+  const handleClick = (item:Workflow) => {
     setClickedItem(item)
     setWorkflowVisible(true)
   }
@@ -152,22 +124,20 @@ export default function Component(
             <TableBody>
                 { workflowsList.map((item:any) => (
                     <TableRow key={item.id} onClick={()=>handleClick(item)} className="cursor-pointer hover:bg-gray-100">
-                    {Object.entries(item)
-                      .filter(([key]) => key !== "id" && key !== "type" && key !== "isFavorite" && key !== "files")
-                      .map(([key, value], index) => (
-                        <TableCell key={key} className="items-center gap-2">
+                        <TableCell  className="items-center gap-2">
                           <div className="flex items-center gap-2">
-                            {index === 0 ? (
-                              <div className="flex gap-2 items-center">
+                            <div className="flex gap-2 items-center">
                               <div >{getIcon(item.status,"h-4 w-4")}</div>
-                              <span>{item[key]}</span>
-                              </div>)
-                              :
-                              <span>{item[key]}</span>
-                            }
+                              <span>{item.status}</span>
+                            </div>
                           </div>
                         </TableCell>
-                      ))}
+                        <TableCell>{item.dueDate}</TableCell>
+                        <TableCell>{item.workflowName}</TableCell>
+                        <TableCell className="w-[255px] overflow-hidden text-ellipsis whitespace-nowrap">{item.currentStep}</TableCell>
+                        <TableCell>{item.assignedTo}</TableCell>
+                        <TableCell>{item.startDate}</TableCell>
+                        
                     </TableRow>
                 ))}
             </TableBody>

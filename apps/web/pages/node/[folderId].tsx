@@ -126,7 +126,6 @@ const folderId = () => {
             toggleItem={toggleFile}
             toggleAll={toggleAll}
             selectedItems={selectedFiles}
-            setSelectedItems={setSelectedFiles}
             editingItemId={editingItemId}
             setEditingItemId={setEditingItemId}
             editingItemName={editingItemName}

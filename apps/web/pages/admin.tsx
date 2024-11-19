@@ -2,6 +2,7 @@
 import { Star, Copy, Clipboard, TrashIcon, ChevronsDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ENTERPRISE_FOLDER_ID } from "../config";
 import {
   Table,
   TableBody,
@@ -76,7 +77,7 @@ export default function Admin(){
   const [assignmentsList,setAssignmentsList] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
-  const [newFolderParentId, setNewFolderParentId] = useState('d810a99b-183e-4e96-8a1e-264d612dcafb')
+  const [newFolderParentId, setNewFolderParentId] = useState(ENTERPRISE_FOLDER_ID)
   const [isRecentlyViewedDialogOpen, setIsRecentlyViewedDialogOpen] = useState(false)
   const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false)
   const [isWorkflowDialogOpen, setIsWorkflowDialogOpen] = useState(false)
@@ -88,6 +89,8 @@ export default function Admin(){
   const setWorkflow = useSetRecoilState(workflowState);
   const setRecentlyViewed = useSetRecoilState(recentlyViewedState);
   const setAssignments = useSetRecoilState(assignmentState);
+  const [approvalRecords,setApprovalRecords] = useState([]);
+  const [workflowDataList,setWorkflowDataList] = useState([]);
 
   async function fetchData() {
     const res = await axios.get(`${BASE_URL}/api/v1/admin/users`);
@@ -100,8 +103,10 @@ export default function Admin(){
     setWorkflowList(res4.data.workflowData);
     const res5 = await axios.get(`${BASE_URL}/api/v1/admin/recentlyViewed`);
     setRecentlyViewedList(res5.data.recentlyViewedData);
-    const res6 = await axios.get(`${BASE_URL}/api/v1/admin/assignments`); 
-    setAssignmentsList(res6.data.assignmentData);
+    const res7 = await axios.get(`${BASE_URL}/api/v1/admin/approvalRecord`); 
+    setApprovalRecords(res7.data.approvalRecordData);
+    const res6 = await axios.get(`${BASE_URL}/api/v1/admin/workflowData`); 
+    setWorkflowDataList(res6.data.workflowDataData);
   }
   
   useEffect(() => {
@@ -120,12 +125,22 @@ export default function Admin(){
   async function deleteRecentlyViewed(id:string){
       await deleteFunction("recentlyViewed",setRecentlyViewedList,id);
   }
-  async function deleteAssignment(id:string){
-      // await deleteFunction("assignments",setAssignmentsList,id);
-      console.log("deleted")
+  async function deleteWorkflowData(id:string){
+    await deleteFunction("workflowData",setWorkflowDataList,id);
   }
+
+  async function deleteApprovalRecord(id:string,userId:string){
+    try{
+      const res = await axios.delete(`${BASE_URL}/api/v1/admin/approvlRecord/${id}`);
+      setAssignmentsList((items:any) => items.filter((item:any) => item.id !== id));
+      toaster("deleted",id,false);
+    }catch(e){
+      toaster("delete",id,true);
+    }
+}
   async function deleteWorkflow(id:string){
       await deleteFunction("workflows",setWorkflowList,id);
+      
   }
   const handleEnterpriseFolder = async () => {
     try{
@@ -287,7 +302,7 @@ export default function Admin(){
       name:newFolderName,
       creatorId:data.creatorId,
       userName:data.creatorName,
-      parentFolderId:newFolderParentId,
+      parentFolderId:newFolderParentId ?? null,
       parentFolderName:data.parentFolderName,
       createdAt:new Date().toLocaleDateString(),
       path:data.path
@@ -299,7 +314,7 @@ export default function Admin(){
   }
   setIsDialogOpen(false)
   setNewFolderName('')
-  setNewFolderParentId('d810a99b-183e-4e96-8a1e-264d612dcafb')
+  setNewFolderParentId(ENTERPRISE_FOLDER_ID)
 }
 
   if(!userList || !folderList || !fileList || !workflowList || !recentlyViewedList || !assignmentsList){
@@ -477,42 +492,73 @@ export default function Admin(){
                 </TableBody>
             </Table>
             <br/><br/>
-            <h2 className="text-lg font-semibold">Assignment</h2>
+            <h2 className="text-lg font-semibold">Approval Data</h2>
             <Table>
                 <TableHeader className="bg-gray-100">
                 <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>User Id</TableHead>
                     <TableHead>User Name</TableHead>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Location</TableHead>
+                    <TableHead>Workflow Id</TableHead>
+                    <TableHead>Assigned Date</TableHead>
+                    <TableHead>Approval Date</TableHead>
                     <TableHead>Delete</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
-            { assignmentsList.map((assignment:any) =>(
+            { approvalRecords.map((approvalRecord:any) =>(
                     <TableRow>
-                        <TableCell>{assignment.name}</TableCell>
-                        <TableCell>{assignment.userId}</TableCell>
-                        <TableCell>{assignment.userName}</TableCell>
-                        <TableCell>{assignment.id}</TableCell>
-                        <TableCell>{assignment.location}</TableCell>
+                        <TableCell>{approvalRecord.name}</TableCell>
+                        <TableCell>{approvalRecord.userId}</TableCell>
+                        <TableCell>{approvalRecord.userName}</TableCell>
+                        <TableCell>{approvalRecord.workflowId}</TableCell>
+                        <TableCell>{approvalRecord.assignedDate}</TableCell>
+                        <TableCell>{approvalRecord.approvalDate}</TableCell>
                         <TableCell>
-                            <Button className="bg-red-500 text-white" onClick={()=>{deleteAssignment(assignment.id)}}>
+                            <Button className="bg-red-500 text-white" onClick={()=>{deleteApprovalRecord(approvalRecord.workflowId,approvalRecord.userId)}}>
                             <TrashIcon className="h-4 w-4" />
                             </Button>
                         </TableCell>
                     </TableRow>
               ))}
+            </TableBody>
+            </Table>
+            <br/><br/>
+
+
+            <h2 className="text-lg font-semibold">Workflow Data</h2>
+            <Table>
+                <TableHeader className="bg-gray-100">
                 <TableRow>
-                  <TableCell colSpan={9}>
-                        <Button variant="outline" 
-                        onClick={()=>{setIsAssignmentDialogOpen(true)}}
-                        className="w-52 fles justify-between px-4">
-                          <Plus className="ml-2 h-4 w-4" /><span>Add Assignment</span><span></span>
-                        </Button>
-                  </TableCell>
+                    <TableHead>Workflow Title</TableHead>
+                    <TableHead>User Id</TableHead>
+                    <TableHead>User Name</TableHead>
+                    <TableHead>Workflow Id</TableHead>
+                    <TableHead>Department</TableHead>
+                    <TableHead>Company Name</TableHead>
+                    <TableHead>Site</TableHead>
+                    <TableHead>Reference Number</TableHead>
+                    <TableHead>Delete</TableHead>
                 </TableRow>
+                </TableHeader>
+                <TableBody>
+            { workflowDataList.map((workflowData:any) =>(
+                    <TableRow>
+                        <TableCell>{workflowData.name}</TableCell>
+                        <TableCell>{workflowData.userId}</TableCell>
+                        <TableCell>{workflowData.userName}</TableCell>
+                        <TableCell>{workflowData.workflowId}</TableCell>
+                        <TableCell>{workflowData.department}</TableCell>
+                        <TableCell>{workflowData.companyName}</TableCell>
+                        <TableCell>{workflowData.site}</TableCell>
+                        <TableCell>{workflowData.referenceNumber}</TableCell>
+                        <TableCell>
+                            <Button className="bg-red-500 text-white" onClick={()=>{deleteWorkflowData(workflowData.id)}}>
+                            <TrashIcon className="h-4 w-4" />
+                            </Button>
+                        </TableCell>
+                    </TableRow>
+              ))}
             </TableBody>
             </Table>
             <br/><br/>

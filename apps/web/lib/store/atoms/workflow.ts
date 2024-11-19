@@ -1,6 +1,6 @@
 import { atom } from "recoil";
 
-interface Item {
+export interface Workflow {
   id: string,
   status: string,
   dueDate: Date,
@@ -8,7 +8,8 @@ interface Item {
   currentStep: string,
   assignedTo: string,
   startDate: Date,
-  files: File[]
+  files: File[],
+  stopDate: Date | null
 }
 
 interface File {
@@ -25,7 +26,7 @@ interface File {
   workflowId: string | null;
 }
   
-export const workflowState = atom<{ isLoading: boolean, items: Item[] }>({
+export const workflowState = atom<{ isLoading: boolean, items: Workflow[] }>({
   key: "workflowState",
   default: {
     isLoading: false,

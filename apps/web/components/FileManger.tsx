@@ -173,14 +173,18 @@ export default function FileManager({
             "Authorization": `Bearer ${localStorage.getItem("token")}`
           }
         });
+        setItems(items.map(item =>
+          item.id === itemId ? { ...item, type:type,name: uniqueName } : item
+        ))
   
       } catch (error) {
         console.log(error);
         // Rollback favorite status in case of an error
         setItems(items.map(item =>
-          item.id === itemId ? { ...item, name: itemName } : item
+          item.id === itemId ? { ...item, name: itemName,type:type } : item
         ))
       }
+      
     }
   }
 
@@ -243,7 +247,7 @@ export default function FileManager({
                           <div className="flex items-center gap-2">
                             {index === 0 ? (
                               <div className="flex gap-2 items-center">
-                              <div >{getIcon(type,iconStyle)}</div>
+                              <div >{getIcon(item.type,iconStyle)}</div>
                                 {editingItemId === item.id && setEditingItemName && setEditingItemId ? (
                                   <Input
                                     value={editingItemName}

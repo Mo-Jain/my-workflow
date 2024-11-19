@@ -17,7 +17,9 @@ import GridLayout from "@/components/Gridlayout"
 import axios from "axios"
 import { BASE_URL } from "@/next.config"
 import Header from "@/components/Header"
-import ActionBar from "@/components/ActionBar"
+import ActionBar from "@/components/ActionBar";
+import {  USER_GUIDE_FOLDER_ID } from "../config";
+
 
 // Sample data - in a real app this would come from your backend
 const filesList = [
@@ -145,14 +147,14 @@ export default function UserGuides() {
         setNewFolderName={setNewFolderName}
         items={files}
         setItems={setFiles}
-        parentFolderId={"2be1f5f1-e756-489f-a0ca-221dd8df89a0"}
+        parentFolderId={USER_GUIDE_FOLDER_ID}
       />
       <ActionBar
         items={files}
         setItems={setFiles}
         selectedItems={selectedFiles}
         setSelectedItems={setSelectedFiles}
-        parentFolderId={"2be1f5f1-e756-489f-a0ca-221dd8df89a0"}
+        parentFolderId={USER_GUIDE_FOLDER_ID}
         setEditingItemId={setEditingItemId}
         setEditingItemName={setEditingItemName}
         />

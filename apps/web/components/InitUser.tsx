@@ -107,7 +107,7 @@ const InitUser = () => {
                 })
             }
             try{
-                const workflowRes = await axios.get(`${BASE_URL}/api/v1/workflow`,{
+                const workflowRes = await axios.get(`${BASE_URL}/api/v1/workflow/all`,{
                     headers:{
                         authorization : `Bearer `+ localStorage.getItem('token')
                     }

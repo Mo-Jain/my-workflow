@@ -1,15 +1,11 @@
-import WorkflowCard from "@/components/WorkflowCard";
-import WorkflowPopup from "@/components/WorkflowPopup";
 import React from "react"
 
-const text = () => {
+const test = () => {
   return (
     <div>
-      <div className="relative z-40 bg-white rounded-lg shadow-lg w-max h-[85vh] overflow-y-auto  ">
-        <WorkflowPopup />
-      </div>
+      <h1>test</h1>
     </div>
   )
 };
 
-export default text;
+export default test;
