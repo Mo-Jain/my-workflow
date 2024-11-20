@@ -14,6 +14,9 @@ import { useRouter } from "next/router"
 import { useRecoilValue } from "recoil"
 import { assignmentItems } from "@/lib/store/selectors/assignment"
 import { getIcon } from "./icon/icon"
+import { useState } from "react"
+import ApproveWorkflow from "@/components/ApproveWorkflow"
+import { Item } from "@/lib/store/atoms/assignment"
 
 // Sample data - in a real app this would come from your backend
 const assignmentsList = [
@@ -40,6 +43,20 @@ const assignmentsList = [
 export default function MyAssignment() {
   const assignments = useRecoilValue(assignmentItems);
   const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
+  const [clickedAssignment, setClickedAssignment] = useState<Item>();
+
+  function handleClick(id: string) {
+    const assignment = assignments.filter(assignment => assignment.id == id)[0];
+    if(!assignment) return;
+    if(assignment.name.includes("Form")){
+      router.push(`/nrdms/form/${id}`);
+    }
+    else{
+      setClickedAssignment(assignment);
+      setIsOpen(true);
+    }
+  }
 
   return (
     <div className="min-h-screen"
@@ -87,7 +104,7 @@ export default function MyAssignment() {
             </TableHeader>
             <TableBody>
               {assignments.map((assignment) => (
-                <TableRow className="cursor-pointer" key={assignment.id} onClick={()=> router.push("/nrdms/form/"+assignment.id)}>
+                <TableRow className="cursor-pointer" key={assignment.id} onClick={()=> handleClick(assignment.id)}>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {getIcon('workflow',"h-4 w-4 text-blue-500")}
@@ -118,6 +135,7 @@ export default function MyAssignment() {
           </Table>
         </div>
       </div>
+      {isOpen && clickedAssignment &&  <ApproveWorkflow setIsOpen={setIsOpen} clickedAssignment={clickedAssignment}/>}
     </div>
   )
 }

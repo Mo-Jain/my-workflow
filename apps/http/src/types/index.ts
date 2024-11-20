@@ -74,11 +74,18 @@ export const updateWorkflowSchema = z.object({
 })
 
 export const createAssignmentSchema = z.object({
-  Aprovers: z.array(z.object({userId: z.string(),step:z.string()})),
-})
+  approvers: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    step: z.string(),
+  })),
+  currentStep: z.string(),
+  workflowName: z.string(),
+});
 
 export const updateAssignmentSchema = z.object({
   comments: z.string(),
+  userId: z.string(),
 })
 
 export const deleteAssignmentSchema = z.object({

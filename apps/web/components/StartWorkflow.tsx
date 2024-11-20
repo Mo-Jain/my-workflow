@@ -25,6 +25,7 @@ import { BASE_URL } from "@/next.config"
 import { toaster } from "@/pages/admin";
 import { get } from "http";
 import { getIcon } from "@/pages/icon/icon";
+import { start } from "repl";
 
 export function formatDate(date:Date) {
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -136,6 +137,8 @@ export default function StartWorkflow(
         priority:"medium",
         status:newWorkflow.status,
         from:newWorkflow.assignedTo,
+        startDate:newWorkflow.startDate,
+        creatorId:res.data.userId
       }
       setWorkflow(prevWorkflows => ({
         ...prevWorkflows,

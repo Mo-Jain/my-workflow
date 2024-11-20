@@ -97,13 +97,15 @@ router.post("/signup", async (req, res) => {
 
         const token = jwt.sign({
             userId: user.id,
+            name: user.name,
         }, JWT_PASSWORD);
 
         res.json({
             message:"User created successfully",
             token,
             username:user.usermail,
-            name:user.name
+            name:user.name,
+            userId:user.id
         })
     } catch(e) {
         console.log("error thrown")
@@ -146,7 +148,8 @@ router.post("/signin", async (req, res) => {
             message:"User signed in successfully",
             token,
             username:user.usermail,
-            name:user.name
+            name:user.name,
+            userId:user.id
         })
     } catch(e) {
         res.status(400).json({message: "Internal server error"})
@@ -243,6 +246,7 @@ router.get('/me',middleware, async (req, res) => {
         res.json({
             username: user.usermail,
             name: user.name,
+            userId: user.id
         })
     }
     catch(err){
@@ -323,6 +327,33 @@ router.delete("/me", middleware, async (req, res) => {
         res.json({
             message: "User deleted successfully",
             ok: true
+        })
+    }
+    catch(err){
+        res.json({
+            message: "Internal server error"
+        })
+    }
+})
+
+router.get("/users/all",middleware, async (req, res) => {
+    try {
+        const users = await client.user.findMany({})
+
+        if(!users){
+            res.status(404).json({
+                message: "User not found"
+            })
+            return
+        }
+
+        const userData = users.map((user) => ({
+            id: user.id,
+            name: user.name,
+            username: user.usermail
+        }))
+        res.json({
+            userData
         })
     }
     catch(err){

@@ -17,4 +17,16 @@ export const userNameState = selector({
 
         return user.name;
     }
-})
+});
+
+export const userDataState = selector({
+    key:'userData',
+    get: ({get})=>{
+        const user = get(userState);
+        const data = {
+                    username: user.username,
+                    name: user.name
+                }
+        return data;
+    }
+});

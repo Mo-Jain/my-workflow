@@ -74,7 +74,7 @@ interface Workflow {
   docSetType: string;
   referenceNumber?: string;
   currentStep: string;
-  currentAssignee: string;
+  currentAssignee?: string ;
 }
 
 interface ApprovalRecord {
@@ -109,6 +109,7 @@ export default function Component() {
       })
 
       const item = res.data.workflowData;
+      console.log(item);
       const workflowData = {
         id: item.id,
         name: item.workflow.workflowName,
@@ -121,7 +122,7 @@ export default function Component() {
         docSetType: item.workflow.type,
         referenceNumber: item.referenceNumber,
         currentStep: item.workflow.currentStep,
-        currentAssignee: item.workflow.currentAssigneeUser.name,
+        currentAssignee: item.workflow.currentAssigneeUser ? item.workflow.currentAssigneeUser.name : null,
       }
       console.log(res.data.workflowData);
       setWorkflow(workflowData);

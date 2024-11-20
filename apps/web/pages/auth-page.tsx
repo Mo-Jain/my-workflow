@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/hooks/use-toast"
 import { BASE_URL } from '@/next.config';
 import axios from 'axios';
-import { useRouter } from 'next/router'
+import { useRouter } from 'next/navigation'
 import { useSetRecoilState } from 'recoil'
 import { userState } from '@/lib/store/atoms/user'
 
@@ -49,8 +49,10 @@ export default function AuthPage() {
             setUser({
                 isLoading:false,
                 username:data.username,
-                name:data.name
+                name:data.name,
+                userId:data.userId
             })
+
             router.push('/');
             toast({
                 title: "Success",

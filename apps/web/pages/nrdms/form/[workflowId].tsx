@@ -22,6 +22,13 @@ import { Dialog } from "@radix-ui/react-dialog"
 import { DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Cross, Crosshair, CrossIcon, LucideCross, Plus } from "lucide-react"
 import { useRouter } from "next/router"
+import { Approver, ApproverField, InputSearchApprover } from "@/components/SearchApprover"
+import { assignmentState } from "@/lib/store/atoms/assignment"
+import { useRecoilValue, useSetRecoilState } from "recoil"
+import { assignmentItems } from "@/lib/store/selectors/assignment"
+import { toaster } from "@/pages/admin"
+import { workflowItems } from "@/lib/store/selectors/workflow"
+import { workflowState } from "@/lib/store/atoms/workflow"
 
 const CompanyCodes = [
   {
@@ -109,7 +116,7 @@ export default function NFAForm() {
     referenceNumber: "",
     sbu: "",
     clauseNumber: "",
-    workflowType: "sequential",
+    workflowType: "Sequential",
     subject: "",
     to: "",
     project: "",
@@ -118,16 +125,19 @@ export default function NFAForm() {
     notification: "no",
   })
 
-  const [multipleWorkflowRole,setMultipleWorkflowRole] = useState<string>();
   const [docSetType,setDocSetType] = useState<string>();
   const [departmentCode,setDepartmentCode] = useState<string | undefined>();
   const [companyCode,setCompanyCode] = useState<string>();
   const [activity,setActivity] = useState<string>();
   const workflowIdObj = useParams();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-  const [workflowRole,setWorkflowRole] = React.useState("");
   const router = useRouter();
-
+  const [approvers, setApprovers] = useState<Approver[]>([]);
+  const setAssignment = useSetRecoilState(assignmentState);
+  const assignment = useRecoilValue(assignmentState);
+  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = React.useState(false);
+  const workflows = useRecoilValue(workflowItems);
+  const setWorkflow = useSetRecoilState(workflowState);
  
 
   useEffect(() => {
@@ -190,17 +200,62 @@ export default function NFAForm() {
     }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
+  const handleSubmitWorkflow = async () => {
+
     try{
+
+
       const res = await axios.post(`${BASE_URL}/api/v1/workflowdata/${workflowIdObj.workflowId}`, formData, {
         headers:{
           authorization : `Bearer `+ localStorage.getItem('token')
         }
-      })
+      })  
 
-      console.log(res.data);
+      console.log("formData.workflowType :",formData.workflowType);
+
+      setApprovers(approvers.map((approver) => ({
+        ...approver,
+        step:formData.workflowType + "Approval", // Update the step property to workflowType
+      })))
+
+      const workflow = workflows.filter(workflow => workflow.id == workflowIdObj.workflowId)[0];
+      const workflowName = workflow.workflowName.slice(0,8) + "-"+formData.referenceNumber;
+      console.log("approvers :",approvers)
+      await axios.post(`${BASE_URL}/api/v1/assignment/${workflowIdObj.workflowId}`,
+        {
+          approvers: approvers,
+          currentStep:formData.workflowType + " Approval",
+          workflowName: workflowName
+        }, {
+        headers:{
+          authorization : `Bearer `+ localStorage.getItem('token')
+        }
+      })  
+
+      setWorkflow(prevWorkflows => ({
+        ...prevWorkflows,
+        items: prevWorkflows.items.map(item => {
+          if(item.id == workflowIdObj.workflowId){
+            return {
+              ...item,
+              workflowName: workflowName,
+              currentStep: formData.workflowType + " Approval",
+              assignedTo: approvers[0].name,
+            }
+          }
+          else{
+            return item;
+          }
+        })
+      }))
+   
+      setAssignment(prevAssignment => ({  
+        isLoading:false,
+        items: prevAssignment.items.filter(item => item.id != workflowIdObj.workflowId)
+      }))
+      console.log("assignment below", assignment);
+
+      toaster("submitted workflow","", false)
 
       router.push("/")
     }
@@ -208,6 +263,15 @@ export default function NFAForm() {
       console.log(error)
     }
     
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if(approvers.length === 0){
+      toaster("Please add approvers","",true)
+      return
+    }
+    setIsSubmitDialogOpen(true)
   }
 
   return (
@@ -255,7 +319,7 @@ export default function NFAForm() {
 
             {/* Column 2 - Fields */}
             <div className="col-span-3 space-y-2">
-              <Input id="workflowName" name="workflowName" value={formData.workflowName} onChange={handleInputChange} required className="w-full h-8 text-xs" />
+              <Input id="workflowName" name="workflowName" value={formData.workflowName} onChange={handleInputChange} required className="w-full h-8 text-xs " />
               <Select required value={formData.department} onValueChange={handleSelectChange("department")}>
                 <SelectTrigger className="w-full h-8 text-xs">
                   <SelectValue placeholder="Select Department" />
@@ -330,21 +394,12 @@ export default function NFAForm() {
                   <SelectValue placeholder="Select Workflow Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="sequential" className="w-full h-8 text-xs">Sequential</SelectItem>
-                  <SelectItem value="parallel" className="w-full h-8 text-xs">Flexi-flow</SelectItem>
+                  <SelectItem value="Sequential" className="w-full h-8 text-xs">Sequential</SelectItem>
+                  <SelectItem value="Flexi-Flow" className="w-full h-8 text-xs">Flexi-Flow</SelectItem>
                 </SelectContent>
               </Select>
-              <Input id="workflowRole" name="workflowRole" value={workflowRole} onChange={(e) => setWorkflowRole(e.target.value)} className="w-full h-8 text-xs"/>
-              <div className="col-span-3 space-y-2">
-                <Textarea 
-                  id="multipleWorkflowRole" 
-                  name="multipleWorkflowRole" 
-                  value={multipleWorkflowRole} 
-                  onChange={(e) => setMultipleWorkflowRole(e.target.value)}
-                   
-                  className="min-h-[5rem] max-h-20 text-xs col-span-1 space-y-2" 
-                />
-              </div>
+              <InputSearchApprover approvers={approvers} setApprovers={setApprovers} className="w-full h-8 text-xs border-2 border-gray-200" />
+              <ApproverField approvers={approvers} setApprovers={setApprovers} className="w-full h-20 text-xs border-2 border-gray-200" />
               <Select required value={docSetType} disabled={docSetType? true : false} >
                 <SelectTrigger className="w-full h-8 text-xs cursor-not-allowed disabled:bg-gray-400 disabled:text-black" >
                   <SelectValue placeholder="Select DocSet Type" />
@@ -446,6 +501,28 @@ export default function NFAForm() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        <Dialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
+        <DialogContent className=" bg-white text-black">
+          <DialogHeader>
+            <DialogTitle>Confirm Workflow Initiation</DialogTitle>
+            <DialogDescription>
+              Click OK to move the workflow. Do you want to continue?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsSubmitDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => {
+              setIsSubmitDialogOpen(false)
+             
+              handleSubmitWorkflow()
+            }}>
+              OK
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -502,6 +502,7 @@ export default function Admin(){
                     <TableHead>Workflow Id</TableHead>
                     <TableHead>Assigned Date</TableHead>
                     <TableHead>Approval Date</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Delete</TableHead>
                 </TableRow>
                 </TableHeader>
@@ -514,6 +515,7 @@ export default function Admin(){
                         <TableCell>{approvalRecord.workflowId}</TableCell>
                         <TableCell>{approvalRecord.assignedDate}</TableCell>
                         <TableCell>{approvalRecord.approvalDate}</TableCell>
+                        <TableCell>{approvalRecord.status}</TableCell>
                         <TableCell>
                             <Button className="bg-red-500 text-white" onClick={()=>{deleteApprovalRecord(approvalRecord.workflowId,approvalRecord.userId)}}>
                             <TrashIcon className="h-4 w-4" />
@@ -537,6 +539,7 @@ export default function Admin(){
                     <TableHead>Department</TableHead>
                     <TableHead>Company Name</TableHead>
                     <TableHead>Site</TableHead>
+                    <TableHead>Workflow Type</TableHead>
                     <TableHead>Reference Number</TableHead>
                     <TableHead>Delete</TableHead>
                 </TableRow>
@@ -551,6 +554,7 @@ export default function Admin(){
                         <TableCell>{workflowData.department}</TableCell>
                         <TableCell>{workflowData.companyName}</TableCell>
                         <TableCell>{workflowData.site}</TableCell>
+                        <TableCell>{workflowData.workflowType}</TableCell>
                         <TableCell>{workflowData.referenceNumber}</TableCell>
                         <TableCell>
                             <Button className="bg-red-500 text-white" onClick={()=>{deleteWorkflowData(workflowData.id)}}>
@@ -573,6 +577,7 @@ export default function Admin(){
                     <TableHead>Current Step</TableHead>
                     <TableHead>Start Date</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead>Delete</TableHead>
 
                 </TableRow>
@@ -587,6 +592,7 @@ export default function Admin(){
                         <TableCell>{workflow.currentStep}</TableCell>
                         <TableCell>{workflow.startDate}</TableCell>
                         <TableCell>{workflow.status}</TableCell>
+                        <TableCell>{workflow.type}</TableCell>
                         <TableCell>
                             <Button className="bg-red-500 text-white" onClick={()=>{deleteWorkflow(workflow.id)}}>
                             <TrashIcon className="h-4 w-4" />

@@ -1,22 +1,20 @@
 import MyWorkflow from "@/components/MyWorkflow"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { favoriteItems } from "@/lib/store/selectors/favoritesSelectors"
-import { get } from "http"
-import { FileText, Folder, Clock, Star, Workflow, CheckCircle2 } from "lucide-react"
+import { FileText, Folder } from "lucide-react"
 import { useRouter } from 'next/router'
-import { useEffect, useState } from "react"
-import { useRecoilValue, useSetRecoilState } from "recoil"
+import {  useState } from "react"
+import { useRecoilValue } from "recoil"
 import { getIcon } from "./icon/icon"
-import { favoritesState } from "@/lib/store/atoms/favorites"
-import { BASE_URL } from "@/next.config"
-import axios from "axios"
+
 import { recentlyViewedItems } from "@/lib/store/selectors/recentlyViewedSelectors"
 import { workflowItems } from "@/lib/store/selectors/workflow"
 import { assignmentItems } from "@/lib/store/selectors/assignment"
 import FavoriteIcon from "@/components/FavoriteIcon"
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import Cardsworkflow from "@/components/Cardsworkflow"
+import ApproveWorkflow from "@/components/ApproveWorkflow"
+import { Item } from "@/lib/store/atoms/assignment"
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
@@ -24,51 +22,26 @@ export default function Home() {
   const [workflowVisible, setWorkflowVisible] = useState(false);
   const favorites = useRecoilValue(favoriteItems);
   const router = useRouter();
-  const setFavorite = useSetRecoilState(favoritesState);
   const recentlyViewed = useRecoilValue(recentlyViewedItems);
   const workflows = useRecoilValue(workflowItems);
   const assignments = useRecoilValue(assignmentItems); 
-  const [startDate, setStartDate] = useState(new Date());
+  const [isOpen, setIsOpen] = useState(false);  
+  const [clickedAssignment, setClickedAssignment] = useState<Item>();
 
-  useEffect(() => {
-    if(!workflows[0]) return;
 
-    setStartDate(new Date(workflows[0].startDate));
-    console.log(startDate.getFullYear());
-    
-  }, [workflows]);
-
-  const getDate = (onTime:number,stopped:number) => {
-    const data = {
-      labels: ['On time', 'Stopped'],
-      datasets: [
-        {
-          data: [onTime, stopped],
-          backgroundColor: ['#3b82f6', '#ef4444'],
-          borderColor: ['#3b82f6', '#ef4444'],
-          borderWidth: 1,
-        },
-      ],
+  function handleClick(id: string) {
+    const assignment = assignments.filter(assignment => assignment.id == id)[0];
+    if(!assignment) return;
+    if(assignment.name.includes("Form")){
+      router.push(`/nrdms/form/${id}`);
     }
-
-    return data;
+    else{
+      console.log("id :",id);
+      console.log("workflows :",workflows);
+      setClickedAssignment(assignment);
+      setIsOpen(true);
+    }
   }
-  
-
-  const options = {
-    cutout: '70%',
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        enabled: false,
-      },
-    },
-  }
-
   
 
   function handleDoubleClick(id:string,type:string) {
@@ -77,9 +50,6 @@ export default function Home() {
     }
   }
 
-  
-
-  
 
   return (
     <>
@@ -125,7 +95,7 @@ export default function Home() {
             </CardHeader>
             <CardContent className="h-[calc(100%-3rem)] bg-gray-100 flex flex-col items-center px-0 text-muted-foreground">
             {assignments.map((item) =>(
-              <div className="flex items-start w-full cursor-pointer items-center gap-2 text-sm py-1 px-1" onClick={() => router.push("/nrdms/form/"+item.id)}>
+              <div className="flex items-start w-full cursor-pointer items-center gap-2 text-sm py-1 px-1" onClick={() => handleClick(item.id)}>
                 {getIcon('workflow',"h-6 w-6 fill-green-400 shrink-0 ")}
                 <div className="border-b">
                   <div className="text-black max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap">
@@ -237,6 +207,7 @@ export default function Home() {
           
         </div>
       </div>
+      {isOpen && clickedAssignment  && <ApproveWorkflow setIsOpen={setIsOpen} clickedAssignment={clickedAssignment}/>}
     </div>
     
     </>

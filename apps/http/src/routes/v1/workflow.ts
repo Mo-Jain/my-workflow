@@ -10,7 +10,10 @@ workflowRouter.get("/all", middleware, async (req, res) => {
 
         const workflows = await client.workflows.findMany({
             where: {
-                creatorId: req.userId
+                creatorId: req.userId,
+                NOT :{
+                    status: "approved"
+                }
             },
             include: {
                 files: true,
@@ -106,12 +109,12 @@ workflowRouter.post("/", middleware, async (req, res) => {
                 currentStep: parsedData.data.currentStep,
                 currentAssigneeId: req.userId,
                 type: parsedData.data.type,
-                approvers: {
-                    create: [
-                    { userId: req.userId!,step:parsedData.data.currentStep }, // Add the creator as an initial assignee if needed
-                                                // Add other assignees as required
-                        ],
-                    },
+                // approvers: {
+                //     create: [
+                //     { userId: req.userId!,step:parsedData.data.currentStep }, // Add the creator as an initial assignee if needed
+                //                                 // Add other assignees as required
+                //         ],
+                //     },
                 files: {
                     connect: selectedFilesId
                     }
@@ -124,7 +127,8 @@ workflowRouter.post("/", middleware, async (req, res) => {
 
         res.json({
             message: "Workflow created successfully",
-            workflow
+            workflow,
+            creatorId: req.userId
         })
     } catch (e) {
         console.error(e);

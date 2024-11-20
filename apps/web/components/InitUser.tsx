@@ -4,6 +4,7 @@ import { recentlyViewedState } from "@/lib/store/atoms/recentlyViewed";
 import { userState } from "@/lib/store/atoms/user";
 import { workflowState } from "@/lib/store/atoms/workflow";
 import { favoriteIsLoading, favoriteItems } from "@/lib/store/selectors/favoritesSelectors";
+import { userNameState } from "@/lib/store/selectors/user";
 import axios from "axios";
 import React, { useEffect } from "react"
 import { useRecoilValue, useSetRecoilState } from "recoil";
@@ -16,6 +17,7 @@ const InitUser = () => {
     const setRecentlyViewed  = useSetRecoilState(recentlyViewedState);
     const setWorkflow  = useSetRecoilState(workflowState);
     const setAssignment = useSetRecoilState(assignmentState);
+    const user = useRecoilValue(userNameState);
 
     useEffect(() => {
 
@@ -31,21 +33,24 @@ const InitUser = () => {
                     setUser({
                         isLoading:false,
                         username:null,
-                        name:null
+                        name:null,
+                        userId:null
                     })
                 }
 
                 setUser({
                     isLoading:false,
                     username:userRes.data.username,
-                    name:userRes.data.name
+                    name:userRes.data.name,
+                    userId:userRes.data.userId
                 })
             }
             catch(err){
                 setUser({
                     isLoading:false,
                     username:null,
-                    name:null
+                    name:null,
+                    userId:null
                 })
             }
 
@@ -163,7 +168,7 @@ const InitUser = () => {
         }
 
         init();
-    }, [])
+    }, [user])
     return <></>
 };
 

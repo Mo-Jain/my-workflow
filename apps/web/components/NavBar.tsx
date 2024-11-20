@@ -16,9 +16,10 @@ import {
   DropdownMenuTrigger,
   } from "@/components/ui/dropdown-menu";
 import { userNameState } from "@/lib/store/selectors/user";
-import axios from "axios";
-import { BASE_URL } from "@/next.config";
-import path from "path";
+import { assignmentState } from "@/lib/store/atoms/assignment";
+import { favoritesState } from "@/lib/store/atoms/favorites";
+import { recentlyViewedState } from "@/lib/store/atoms/recentlyViewed";
+import { workflowState } from "@/lib/store/atoms/workflow";
 
 const Header = () => {
   const [isSearchVisible, setIsSearchVisible] = useState(false)
@@ -113,6 +114,40 @@ const Profile = ({shortName, name, router,setShortName}:{
 
   const setUser  = useSetRecoilState(userState);
   const userName  =  useRecoilValue(userNameState);
+  const setAssignment = useSetRecoilState(assignmentState);
+  const setFavorite = useSetRecoilState(favoritesState);
+  const setRecentlyViewed = useSetRecoilState(recentlyViewedState);
+  const setWorkflow = useSetRecoilState(workflowState);
+
+  function handleLogout(){
+    localStorage.setItem("token","");
+    console.log(userName)
+    router.push('/auth-page');
+    setUser({
+        isLoading:false,
+        username:null,
+        name:null,
+        userId:null
+    }),
+    setAssignment({
+      isLoading:false,
+      items:[]
+    }),
+    setFavorite({
+      isLoading:false,
+      favorites:[]
+    }),
+    setRecentlyViewed({
+      isLoading:false,
+      items:[]
+    }),
+     setWorkflow({
+      isLoading:false,
+      items:[]
+    }),
+    setShortName("")
+    
+  }
   
   return (
     <div className="flex items-center gap-2">
@@ -137,15 +172,7 @@ const Profile = ({shortName, name, router,setShortName}:{
             <DropdownMenuItem 
               className="bg-gray-100 cursor-pointer flex justify-center items-center gap-2 rounded-md p-2"
               onSelect={() =>{
-              localStorage.setItem("token","");
-              setUser({
-                  isLoading:false,
-                  username:null,
-                  name:null
-              }),
-              setShortName("")
-              console.log(userName)
-              router.push('/auth-page');
+              handleLogout()
             }}>
             <Button variant="ghost" size="icon" className="h-8 w-8">
               <LogOut className="h-4 w-4" />
