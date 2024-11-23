@@ -16,7 +16,8 @@ interface Folder {
   items?: string,
   size?: string,
   modifiedAt: string | Date,
-  isFavorite: boolean
+  isFavorite: boolean,
+  contentType?:string
 }
 
 const folderList = [

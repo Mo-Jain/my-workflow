@@ -1,7 +1,7 @@
 import MyWorkflow from "@/components/MyWorkflow"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { favoriteItems } from "@/lib/store/selectors/favoritesSelectors"
-import { FileText, Folder } from "lucide-react"
+import { CheckCircle2Icon, Clock, FileText, Folder, Star } from "lucide-react"
 import { useRouter } from 'next/router'
 import {  useState } from "react"
 import { useRecoilValue } from "recoil"
@@ -38,6 +38,7 @@ export default function Home() {
     else{
       console.log("id :",id);
       console.log("workflows :",workflows);
+      console.log("assignments :",assignments);
       setClickedAssignment(assignment);
       setIsOpen(true);
     }
@@ -91,25 +92,35 @@ export default function Home() {
               className="flex flex-row items-center gap-2 border-b h-1/6 cursor-pointer hover:bg-gray-100"
               onClick={()=>router.push('/myassignment')} >
               {getIcon('check',"h-8 w-8 text-white fill-green-500 stroke-2")}
-              <CardTitle className="text-sm font-medium">My Assignments</CardTitle>
+              <CardTitle className="text-sm  font-medium">My Assignments</CardTitle>
             </CardHeader>
-            <CardContent className="h-[calc(100%-3rem)] bg-gray-100 flex flex-col items-center px-0 text-muted-foreground">
-            {assignments.map((item) =>(
-              <div className="flex items-start w-full cursor-pointer items-center gap-2 text-sm py-1 px-1" onClick={() => handleClick(item.id)}>
-                {getIcon('workflow',"h-6 w-6 fill-green-400 shrink-0 ")}
-                <div className="border-b">
-                  <div className="text-black max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap">
-                    {item.name}
+            {assignments.length > 0 ?
+              <CardContent className="h-[calc(100%-3rem)] bg-gray-100 flex flex-col items-center px-0 text-muted-foreground">
+              {assignments.map((item) =>(
+                <div className="flex items-start w-full cursor-pointer items-center gap-2 text-sm py-1 px-1" onClick={() => handleClick(item.id)}>
+                  {getIcon('workflow',"h-6 w-6 fill-green-400 shrink-0 ")}
+                  <div className="border-b">
+                    <div className="text-black max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap">
+                      {item.name}
+                    </div>
+                    <div className="text-xs max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap py-1">
+                        {item.location}
+                    </div>
                   </div>
-                  <div className="text-xs max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap py-1">
-                      {item.location}
+                  <div className="flex items-center gap-2">
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                </div>
-              </div>
-            ))}
-            </CardContent>
+              ))}
+              </CardContent>
+              :
+              <>
+                
+                <CardContent className="h-[calc(100%-3rem)] flex flex-col items-center justify-center text-muted-foreground">
+                  <CheckCircle2Icon className="h-16 w-16 text-gray-200 mb-2" />
+                  <span className="text-center">There are no assignments assigned to you.</span>
+                </CardContent>
+              </>
+              }
           </Card>
 
           {/* ------------------------------------------------------------------------------- */}
@@ -143,8 +154,8 @@ export default function Home() {
               <>
                 
                 <CardContent className="h-[calc(100%-3rem)] flex flex-col items-center justify-center text-muted-foreground">
-                  <FileText className="h-12 w-12 text-gray-200 mb-2" />
-                  There are no items to display.
+                  <Star className="h-16 w-16 text-gray-200 mb-2" />
+                  <span className="text-center">There are no items to display as favorites.</span>
                 </CardContent>
               </>
               }
@@ -158,19 +169,28 @@ export default function Home() {
               {getIcon('clock',"h-8 w-8 stroke-1 text-white fill-gray-400")}
               <CardTitle className="text-sm font-medium">Recently Accessed</CardTitle>
             </CardHeader>
-            <CardContent className="h-[calc(100%-3rem)] bg-gray-100 flex flex-col items-center px-0 text-muted-foreground">
-            {recentlyViewed.map((item:any)=>(
-                  <div 
-                    key={item.id}
-                    className="flex justify-between cursor-pointer gap-2 w-full text-black py-2 px-2 border bg-grey-100 hover:bg-gray-100" >
-                      <div className="flex gap-2 items-center">
-                        {getIcon(item.type,"h-6 w-6")}
-                        <span className="text-sm text-black max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap">{item.name}</span>
-                      </div>
-                      
-                  </div>
-                ))}
-            </CardContent>
+            {recentlyViewed.length > 0 ?
+              <CardContent className="h-[calc(100%-3rem)] bg-gray-100 flex flex-col items-center px-0 text-muted-foreground">
+              {recentlyViewed.map((item:any)=>(
+                    <div 
+                      key={item.id}
+                      className="flex justify-between cursor-pointer gap-2 w-full text-black py-2 px-2 border bg-grey-100 hover:bg-gray-100" >
+                        <div className="flex gap-2 items-center">
+                          {getIcon(item.type,"h-6 w-6")}
+                          <span className="text-sm text-black max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap">{item.name}</span>
+                        </div>
+                        
+                    </div>
+                  ))}
+              </CardContent>
+              :
+              <>
+                <CardContent className="h-[calc(100%-3rem)] flex flex-col items-center justify-center text-muted-foreground">
+                  <Clock className="h-16 w-16 text-gray-200 mb-2" />
+                  There are no items to display.
+                </CardContent>
+              </>
+            }
           </Card>
 
           {/* ------------------------------------------------------------------------------- */}

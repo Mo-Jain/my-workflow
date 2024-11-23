@@ -34,7 +34,7 @@ folderRouter.post("/", middleware, async (req, res) => {
                 name: name,
                 creatorId: req.userId!,
                 parentFolderId: parsedData.data.parentFolderId ?? null,
-                path: parentFolder ? parentFolder?.path + "/" + parentFolder?.name : "root"
+                path: parentFolder ? parentFolder?.path + "/" + name : "root"
             }
         })
 

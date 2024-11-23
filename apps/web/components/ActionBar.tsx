@@ -22,9 +22,10 @@ interface File {
     size?: string,
     modifiedAt: string | Date,
     isFavorite: boolean,
+    contentType?:string
 }
 
-interface FileManagerProps {
+interface ActionBarProps {
     selectedItems: string[];
     setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>;
     items: File[]; 
@@ -43,7 +44,7 @@ const ActionBar = (
         parentFolderId,
         setEditingItemId,
         setEditingItemName
-    }: FileManagerProps
+    }: ActionBarProps
 ) => {
 
     const [copiedItem, setCopiedItem] = useRecoilState(copyItemState);
@@ -93,6 +94,7 @@ const ActionBar = (
           size: item.size,
           type: item.type,
           modifiedAt: unixTimestampInSeconds,
+          contentType: item.contentType
       };
   
       try {
@@ -120,6 +122,8 @@ const ActionBar = (
                       "Authorization": `Bearer ${localStorage.getItem("token")}`
                   }
               });
+
+              
   
               setItems(prevItems => [
                 ...prevItems,

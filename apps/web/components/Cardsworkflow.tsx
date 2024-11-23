@@ -6,6 +6,7 @@ import { Doughnut } from 'react-chartjs-2'
 import { getIcon } from '@/pages/icon/icon'
 import { workflowItems } from '@/lib/store/selectors/workflow'
 import { useRecoilValue } from 'recoil'
+import { WorkflowIcon } from 'lucide-react'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
@@ -62,6 +63,7 @@ export default function Cardsworkflow({ setWorkflowVisible }: WorkflowCardProps)
               {getIcon('workflow',"h-8")}
               <CardTitle className="text-sm font-medium">My Workflows</CardTitle>
             </CardHeader>
+            {workflows.length > 0 ?
               <CardContent className="h-[calc(100%-3rem)]  flex bg-gray-800 text-white flex-col items-center p-2 text-muted-foreground">
               {workflows.length > 1 ?
                 <div className="flex h-full w-full items-center justify-center gap-2">
@@ -69,21 +71,21 @@ export default function Cardsworkflow({ setWorkflowVisible }: WorkflowCardProps)
                     <div className=" relative rounded-full">
                     <Doughnut data={chartData} options={options} className="cursor-pointer" />
                       <div className="absolute inset-0 flex  items-center justify-center rounded-full ">
-                          <div className="text-center cursor-pointer">
-                            <div className="text-2xl font-bold">{workflows.length}</div>
-                            <div className="text-xs text-muted-foreground">Total</div>
+                          <div className="text-center cursor-pointer text-gray-300">
+                            <div className="text-4xl font-bold">{workflows.length}</div>
+                            <div className="text-base text-muted-foreground">Total</div>
                           </div>
                       </div>
                     </div>
                 </div>
                 <div>
-                  {onTimeCount > 0 && <div className=" flex justify-center mr-8 ml-8 items-center text-sm text-gray-300 gap-2">
-                      <span className="text-lg text-blue-300 cursor-pointer">{onTimeCount}</span>
-                      <span className="text-xs cursor-pointer" onClick={()=> setWorkflowVisible(true)}>On time</span>
+                  {onTimeCount > 0 && <div className=" flex justify-center mr-8 ml-2 items-center text-lg text-gray-300 gap-2">
+                      <span className="text-2xl text-blue-300 cursor-pointer">{onTimeCount}</span>
+                      <span className="text-base cursor-pointer" onClick={()=> setWorkflowVisible(true)}>On time</span>
                   </div>}
-                  {stoppedCount > 0 && <div className=" flex justify-center mr-8 ml-8 items-center text-sm text-gray-300 gap-2">
-                      <span className="text-lg text-red-600 cursor-pointer">{stoppedCount}</span>
-                      <span className="text-xs cursor-pointer" onClick={()=> setWorkflowVisible(true)}>Stopped</span>
+                  {stoppedCount > 0 && <div className=" flex justify-center mr-8 ml-2 items-center text-lg text-gray-300 gap-2">
+                      <span className="text-2xl text-red-600 cursor-pointer">{stoppedCount}</span>
+                      <span className="text-base cursor-pointer" onClick={()=> setWorkflowVisible(true)}>Stopped</span>
                   </div>}
                 </div>
                 </div>
@@ -127,6 +129,15 @@ export default function Cardsworkflow({ setWorkflowVisible }: WorkflowCardProps)
                   </div>
                   }
       </CardContent>
+      :
+        <>
+          
+          <CardContent className="h-[calc(100%-3rem)]  flex bg-gray-800 text-white flex-col justify-center items-center p-2 text-muted-foreground">
+            <WorkflowIcon className="h-16 w-16 text-gray-200 mb-2" />
+            <span className="text-center">There are no workflow created by you.</span>
+          </CardContent>
+        </>
+        }
     </Card>
   )
 }

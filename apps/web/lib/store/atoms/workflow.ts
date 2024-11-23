@@ -9,7 +9,8 @@ export interface Workflow {
   assignedTo: string,
   startDate: Date,
   files: File[],
-  stopDate: Date | null
+  stopDate: Date | null,
+  actions: string | null,
 }
 
 interface File {

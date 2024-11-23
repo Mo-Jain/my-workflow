@@ -127,7 +127,8 @@ export default function StartWorkflow(
         assignedTo: res.data.workflow.currentAssigneeUser.name,
         startDate: res.data.workflow.startDate,
         files: res.data.workflow.files,
-        stopDate:res.data.workflow.stopDate
+        stopDate:res.data.workflow.stopDate,
+        actions:res.data.workflow.actions
       }
       const assignments = {
         id:newWorkflow.id,
@@ -138,7 +139,8 @@ export default function StartWorkflow(
         status:newWorkflow.status,
         from:newWorkflow.assignedTo,
         startDate:newWorkflow.startDate,
-        creatorId:res.data.userId
+        creatorId:res.data.userId,
+        actions:newWorkflow.actions
       }
       setWorkflow(prevWorkflows => ({
         ...prevWorkflows,

@@ -25,7 +25,6 @@ import { useRouter } from "next/router"
 import { Approver, ApproverField, InputSearchApprover } from "@/components/SearchApprover"
 import { assignmentState } from "@/lib/store/atoms/assignment"
 import { useRecoilValue, useSetRecoilState } from "recoil"
-import { assignmentItems } from "@/lib/store/selectors/assignment"
 import { toaster } from "@/pages/admin"
 import { workflowItems } from "@/lib/store/selectors/workflow"
 import { workflowState } from "@/lib/store/atoms/workflow"
@@ -124,6 +123,11 @@ export default function NFAForm() {
     finalApproval: "no",
     notification: "no",
   })
+  interface Approver {
+    id: string;
+    name: string;
+    step: string;
+}
 
   const [docSetType,setDocSetType] = useState<string>();
   const [departmentCode,setDepartmentCode] = useState<string | undefined>();
@@ -133,6 +137,7 @@ export default function NFAForm() {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const router = useRouter();
   const [approvers, setApprovers] = useState<Approver[]>([]);
+  const [approversFinal, setApproversFinal] = useState<Approver[]>([]);
   const setAssignment = useSetRecoilState(assignmentState);
   const assignment = useRecoilValue(assignmentState);
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = React.useState(false);
@@ -204,6 +209,16 @@ export default function NFAForm() {
 
     try{
 
+      let newApprovers = approvers.map((approver) => {
+        return({
+        id: approver.id,
+        name: "myname",
+        step:formData.workflowType + " Approval", 
+      })})
+
+      newApprovers = [...newApprovers, ...approversFinal];
+
+      console.log(newApprovers);
 
       const res = await axios.post(`${BASE_URL}/api/v1/workflowdata/${workflowIdObj.workflowId}`, formData, {
         headers:{
@@ -211,19 +226,15 @@ export default function NFAForm() {
         }
       })  
 
-      console.log("formData.workflowType :",formData.workflowType);
+      console.log("formData.workflowType :",formData.workflowType); 
 
-      setApprovers(approvers.map((approver) => ({
-        ...approver,
-        step:formData.workflowType + "Approval", // Update the step property to workflowType
-      })))
+
 
       const workflow = workflows.filter(workflow => workflow.id == workflowIdObj.workflowId)[0];
       const workflowName = workflow.workflowName.slice(0,8) + "-"+formData.referenceNumber;
-      console.log("approvers :",approvers)
       await axios.post(`${BASE_URL}/api/v1/assignment/${workflowIdObj.workflowId}`,
         {
-          approvers: approvers,
+          approvers: newApprovers,
           currentStep:formData.workflowType + " Approval",
           workflowName: workflowName
         }, {
@@ -314,6 +325,14 @@ export default function NFAForm() {
               <Label htmlFor="project" className="block h-8 flex items-center justify-end text-xs">Project </Label>
               <Label htmlFor="remarks" className="block h-20 pt-2 flex items-start justify-end text-xs">Remarks </Label>
               <Label htmlFor="finalApproval" className="block h-8 flex items-center text-right justify-between text-xs">Final approval Required? </Label>
+              {formData.finalApproval === "yes" && 
+                <div className={`overflow-hidden transition-all duration-200 ease-in-out ${
+                  formData.finalApproval === "yes" ? "max-h-[500px]" : "max-h-0"
+                }`}>
+                  <Label htmlFor="workflowRole" className="block h-8 flex items-center justify-end text-xs">Workflow Role</Label>              
+                  <Label htmlFor="multipleWorkflowRole" className="block h-20 pt-2 flex text-right items-start justify-end text-xs">Final Approval Role <span className="text-red-500">*</span></Label>
+                </div>
+              }
               <Label htmlFor="notification" className="block h-8 flex items-center text-right justify-end text-xs">Notification Required? </Label>
             </div>
 
@@ -398,8 +417,8 @@ export default function NFAForm() {
                   <SelectItem value="Flexi-Flow" className="w-full h-8 text-xs">Flexi-Flow</SelectItem>
                 </SelectContent>
               </Select>
-              <InputSearchApprover approvers={approvers} setApprovers={setApprovers} className="w-full h-8 text-xs border-2 border-gray-200" />
-              <ApproverField approvers={approvers} setApprovers={setApprovers} className="w-full h-20 text-xs border-2 border-gray-200" />
+              <InputSearchApprover approvers={approvers} setApprovers={setApprovers} className="w-full h-8 text-xs border-2 border-gray-200" finalApproval={false} />
+              <ApproverField approvers={approvers} setApprovers={setApprovers} className="w-full h-20 text-xs border-2 border-gray-200 p-3" />
               <Select required value={docSetType} disabled={docSetType? true : false} >
                 <SelectTrigger className="w-full h-8 text-xs cursor-not-allowed disabled:bg-gray-400 disabled:text-black" >
                   <SelectValue placeholder="Select DocSet Type" />
@@ -421,6 +440,23 @@ export default function NFAForm() {
                   <SelectItem value="no" className="w-full h-8 text-xs">No</SelectItem>
                 </SelectContent>
               </Select>
+              <div
+                className={` transition-all duration-200 ease-in-out ${
+                  formData.finalApproval === "yes" ? "max-h-[500px]" : "max-h-0 overflow-hidden"  
+                }`}
+              >
+                <InputSearchApprover
+                  approvers={approversFinal}
+                  setApprovers={setApproversFinal}
+                  className={`w-full h-8 mt-1 text-xs border-2 border-gray-200`}
+                  finalApproval={formData.finalApproval === "yes" ? true : false}
+                />
+                <ApproverField
+                  approvers={approversFinal}
+                  setApprovers={setApproversFinal}
+                  className={`w-full h-20 mt-3 text-xs border-2 border-gray-200 p-3`}
+                />
+              </div>
               <Select  value={formData.notification} onValueChange={handleSelectChange("notification")}>
                 <SelectTrigger className="w-full h-8 text-xs">
                   <SelectValue placeholder="Select" />

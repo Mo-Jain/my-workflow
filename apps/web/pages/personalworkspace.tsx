@@ -72,7 +72,8 @@ interface File {
   items?: string,
   size?: string,
   modifiedAt: string | Date,
-  isFavorite: boolean
+  isFavorite: boolean,
+  contentType?:string
 }
 
 export default function PersonalWorkspace() {

@@ -78,19 +78,20 @@ interface Workflow {
 }
 
 interface ApprovalRecord {
-    id:string;
-    step:string;
-    userName:string;
-    assignedDate:string;
-    approvalDate?:string;
-    status:string;
-    comments?:string;
+  id:string;
+  step:string;
+  userName:string;
+  assignedDate:string;
+  approvalDate?:string;
+  status:string;
+  comments?:string;
+  userId:string;
 }
+
 interface File {
   id: string,
   name: string,
 }
-
 
 export default function Component() {
   const [workflow,setWorkflow] = useState<Workflow>();
@@ -127,12 +128,13 @@ export default function Component() {
       console.log(res.data.workflowData);
       setWorkflow(workflowData);
       const approvalData = res.data.workflowData.workflow.approvers.map((item:any) => ({
-        id: item.id,
+        id: item.order,
         step: item.step,
         userName: item.user.name,
+        userId: item.userId,
         assignedDate: item.assignedDate,
         approvalDate: item.approvalDate,
-        status: item.approvalDate ? "approved" : "In progress",
+        status: item.status,
         comments: item.comments,
       }));
       console.log(approvalData);
@@ -161,22 +163,53 @@ export default function Component() {
     fetchData();
   }, [workflowIdObj]);
 
-  function getStyle(status:string) :string{
-    if(status === "Completed"){
-      return "bg-green-50 text-green-700"
-    }
-    else if(status === "on time"){
-      return "bg-blue-50 text-blue-700"
-    }
-    else{
-      return "bg-red-50 text-red-700"
-    }
+  function getNoOfDays(approvalDate:string | null | undefined,assignedDate:string | null | undefined) :string{
+    if(!approvalDate || !assignedDate) return "NA";
+    const daysTaken = Math.ceil((new Date(approvalDate).getTime() - new Date(assignedDate).getTime()) / (1000 * 3600 * 24));
+    return daysTaken.toString() ;
   }
+  
   
   function dateformat(date:string | undefined) {
     if(!date) return "NA";
     return date.split('T')[0]+" "+date.split('T')[1].slice(0,5)
   }
+
+
+  if(!workflow) return <div>Loading...</div>
+  
+  const getComments = (comments:string) => {
+    const commentsArr = comments.split('\n');
+    return (
+      <div>
+        {
+          commentsArr.map((comment, index) => (
+            <div key={index} className="text-sm text-gray-600 p-1">
+              {comment}
+            </div>
+          ))
+        }
+      </div>
+    )
+  }
+
+  const processComments = (comment: string | undefined | null, approvedDate:string | null | undefined, step:string) => {
+    if(!comment || comment === "") return "NA";
+    const commentArr = comment.split('\hl');
+    return (
+      <div>
+        <div>
+          {getComments(commentArr[0])}
+        </div>
+        {commentArr[1] && approvedDate &&
+        <div className="text-sm text-gray-600 p-1 border-t border-gray-400">
+          <span>Reviewer Comments Date: {formatDate(new Date(approvedDate))} Step Name: {step}: </span>
+          {commentArr[1]}
+        </div>}
+      </div>
+    )
+  }
+
 
   return (
     <div className="min-h-screen"
@@ -216,14 +249,14 @@ export default function Component() {
             <div className="border-[1px] border-black p-1">Pending at Tasks Performer</div>
         </div>
         <div className=" col-span-1 w-fit">
-            <div className="border-[1px] border-black p-1">{workflow && workflow.companyName ? workflow.companyName :"Pending"}</div>
-            <div className="border-[1px] border-black p-1">{workflow && workflow.department ? workflow.department :"Pending"}</div>
-            <div className="border-[1px] border-black p-1">{workflow && workflow.site ? workflow.site :"Pending"}</div>
-            <div className="border-[1px] border-black p-1">{workflow && workflow.workflowType ? workflow.workflowType :"Pending"}</div>
-            <div className="border-[1px] border-black p-1">{workflow && workflow.docSetType ? workflow.docSetType :"Pending"}</div>
-            <div className="border-[1px] border-black p-1">{workflow && workflow.referenceNumber ? workflow.referenceNumber :"Pending"}</div>
-            <div className="border-[1px] border-black p-1">{workflow && workflow.currentStep ? workflow.currentStep :"Pending"}</div>
-            <div className="border-[1px] border-black p-1">{workflow && workflow.currentAssignee ? workflow.currentAssignee :"Pending"}</div>
+            <div className="border-[1px] border-black p-1">{workflow.companyName ? workflow.companyName :"Pending"}</div>
+            <div className="border-[1px] border-black p-1">{workflow.department ? workflow.department :"Pending"}</div>
+            <div className="border-[1px] border-black p-1">{workflow.site ? workflow.site :"Pending"}</div>
+            <div className="border-[1px] border-black p-1">{workflow.workflowType ? workflow.workflowType :"Pending"}</div>
+            <div className="border-[1px] border-black p-1">{workflow.docSetType ? workflow.docSetType :"Pending"}</div>
+            <div className="border-[1px] border-black p-1">{workflow.referenceNumber ? workflow.referenceNumber :"Pending"}</div>
+            <div className="border-[1px] border-black p-1">{workflow.currentStep ? workflow.currentStep :"Pending"}</div>
+            <div className="border-[1px] border-black p-1 min-h-[32px]"> {(workflow?.currentStep === "Approved" || workflow?.currentStep === "Rejected") ? workflow.currentStep : workflow.currentAssignee }</div>
         </div>
      
         <div></div>
@@ -277,14 +310,20 @@ export default function Component() {
             </TableHeader>
             <TableBody>
               {approvals.map((report) => (
-                <TableRow key={report.id}>
+                <TableRow key={report.id} className={`${report.status==="Forwarded" || report.status==="Sent for review"? "bg-pink-100":""}`}>
                   <TableCell className="max-w-100px text-wrap">{report.step}</TableCell>
                   <TableCell className="">{report.userName}</TableCell>
                   <TableCell className="max-w-[80px]">{dateformat(report.assignedDate)}</TableCell>
                   <TableCell className=" max-w-[80px]">{dateformat(report.approvalDate)}</TableCell>
-                  <TableCell className={` w-[120px] ${report.status =="In progress" ? "bg-green-400" : ""}`}>{report.status}</TableCell>
-                  <TableCell className="">{"NA"}</TableCell>
-                  <TableCell className="">{report.comments ?? "NA"}</TableCell>
+                  {/* Due to bg defined in table row below css is not applicable */}
+                  <TableCell
+                      className="w-[120px]"
+                      style={{ backgroundColor: report.status === "In Progress" ? "#34D399" : "inherit" }} // Tailwind green-400 hex
+                    >
+                      {report.status}
+                    </TableCell>
+                  <TableCell className="text-center">{getNoOfDays(report.approvalDate,report.assignedDate)}</TableCell>
+                  <TableCell className="max-w-[200px] whitespace-wrap">{processComments(report.comments,report.approvalDate,report.step)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -293,7 +332,6 @@ export default function Component() {
 
         {/* Pagination */}
         <h1 className="text-lg font-semibold mt-8 mb-6">Attachments:</h1>
-
         <Button className="m-1">Download All Attachment</Button>
         <Table>
             <TableHeader>

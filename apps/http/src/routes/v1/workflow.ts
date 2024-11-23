@@ -12,7 +12,9 @@ workflowRouter.get("/all", middleware, async (req, res) => {
             where: {
                 creatorId: req.userId,
                 NOT :{
-                    status: "approved"
+                    status: {
+                        in: ["Approved","Rejected"]
+                    }
                 }
             },
             include: {
@@ -30,7 +32,8 @@ workflowRouter.get("/all", middleware, async (req, res) => {
             assignedTo: workflow.currentAssigneeUser?.name,
             startDate: workflow.startDate,
             files: workflow.files,
-            stopDate : workflow.stopDate ?? null
+            stopDate : workflow.stopDate ?? null,
+            actions:workflow.actions ?? null
         }))
         
         res.json({
@@ -46,13 +49,24 @@ workflowRouter.get("/report", middleware, async (req, res) => {
     try {
         const workflowReport = await client.workflows.findMany({
             where: {
-                creatorId: req.userId,
+              OR: [
+                { creatorId: req.userId }, // Condition for workflows created by the user
+                { 
+                  approvers: { 
+                    some: { 
+                        userId: req.userId,
+                        status: { not: "Task not assigned" }
+                     },
+                  },
+                },
+              ],
             },
             include: {
-                workflowData: true,
-                creator: true,
-            }
-        })
+              workflowData: true,
+              creator: true,
+              approvers: true, // Include approvers to fetch approval details
+            },
+          });
     
         res.json({
             workflowReport
@@ -109,12 +123,6 @@ workflowRouter.post("/", middleware, async (req, res) => {
                 currentStep: parsedData.data.currentStep,
                 currentAssigneeId: req.userId,
                 type: parsedData.data.type,
-                // approvers: {
-                //     create: [
-                //     { userId: req.userId!,step:parsedData.data.currentStep }, // Add the creator as an initial assignee if needed
-                //                                 // Add other assignees as required
-                //         ],
-                //     },
                 files: {
                     connect: selectedFilesId
                     }

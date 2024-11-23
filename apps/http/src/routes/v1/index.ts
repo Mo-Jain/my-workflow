@@ -15,6 +15,7 @@ import { assignmentRouter } from "./assignment";
 import { workflowRouter } from "./workflow";
 import { adminRouter } from "./admin";
 import workflowDataRouter from "./workflowdata";
+import { awsRouter } from "./aws";
 
 export const router = Router();
 
@@ -25,7 +26,8 @@ export const formatItem = (item: any, isFolder: boolean) => ({
     items: isFolder ? item.subfolders.length + item.files.length + " items" : undefined,
     size: !isFolder ? item.size : undefined,
     modified: item.createdAt,
-    isFavorite: item.isFavorite
+    isFavorite: item.isFavorite,
+    contentType: item.contentType ?? undefined
 });
 
 router.post("/enterprise", middleware, async (req, res) => {
@@ -364,6 +366,9 @@ router.get("/users/all",middleware, async (req, res) => {
 })
 
 
+  
+
+
 
 router.use("/folder", folderRouter);
 router.use("/file", fileRouter);
@@ -373,4 +378,5 @@ router.use("/assignment", assignmentRouter);
 router.use("/workflow", workflowRouter);
 router.use("/admin", adminRouter);
 router.use("/workflowdata", workflowDataRouter);
+router.use("/aws", awsRouter);
 

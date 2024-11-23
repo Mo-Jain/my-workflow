@@ -267,7 +267,7 @@ adminRouter.delete("/approvalRecord/:id",  async (req, res) => {
         }
         const assignments = await client.approvalRecord.delete({
             where: {
-                userId_workflowId: {workflowId: parseInt(req.params.id), userId: parsedData.data.userId}
+                id: parseInt(req.params.id)
             },
         });
         res.json({
@@ -287,6 +287,12 @@ adminRouter.delete("/workflows/:id",  async (req, res) => {
         
 
         await client.approvalRecord.deleteMany({
+            where:{
+                workflowId:parseInt(req.params.id)
+            }
+        });
+
+        await client.workflowData.deleteMany({
             where:{
                 workflowId:parseInt(req.params.id)
             }

@@ -1,5 +1,7 @@
 import z from "zod";
 
+const bufferSchema = z.instanceof(Buffer);
+
 export const SignupSchema = z.object({
     username: z.string(),
     password: z.string(),
@@ -36,8 +38,9 @@ export const createFileSchema = z.object({
   parentFolderId: z.string(),
   size: z.string(),
   type: z.string(),
-  modifiedAt: z.number  ().optional(),
-})
+  modifiedAt: z.number().optional(),
+  contentType: z.string()
+});
 
 export const deleteFileSchema = z.object({
   fileId: z.string(),
@@ -85,8 +88,17 @@ export const createAssignmentSchema = z.object({
 
 export const updateAssignmentSchema = z.object({
   comments: z.string(),
-  userId: z.string(),
 })
+
+export const forwardAssignmentSchema = z.object({
+  comments: z.string(),
+  userId:z.string()
+})
+
+export const replyAssignmentSchema = z.object({
+  comments: z.string(),
+  id: z.number()
+});
 
 export const deleteAssignmentSchema = z.object({
   userId: z.string(),
@@ -109,6 +121,10 @@ export const createWorkflowDataSchema = z.object({
   notification: z.string().optional()
 })
 
+export const createSignedUrl = z.object({
+  fileType: z.string(),
+  fileName: z.string()
+})
 
 
 

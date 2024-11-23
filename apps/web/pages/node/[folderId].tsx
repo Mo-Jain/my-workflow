@@ -33,7 +33,8 @@ const filesList = [
     items?: string,
     size?: string,
     modifiedAt: string,
-    isFavorite: boolean
+    isFavorite: boolean,
+    contentType?:string
   }
 
 const folderId = () => {

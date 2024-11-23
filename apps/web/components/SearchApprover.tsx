@@ -22,11 +22,13 @@ export interface Approver {
 export const InputSearchApprover = (
     {approvers,
      setApprovers,
-     className
+     className,
+     finalApproval
     }:
     {approvers:Approver[],
      setApprovers:React.Dispatch<React.SetStateAction<Approver[]>>,
-    className?:string
+    className?:string,
+    finalApproval:boolean
     }
     ) => {
   const [isFocus, setIsFocus] = useState(false)
@@ -69,7 +71,7 @@ export const InputSearchApprover = (
     const newApprover: Approver = {
       id: user.id.toString(),
       name: user.name,
-      step: `flexi-flow approval`,
+      step: finalApproval ? `Final Approver` : `Flexi-Flow Approval`,
     }
     setApprovers([...approvers, newApprover])
     setSearchTerm("")
@@ -92,6 +94,7 @@ export const InputSearchApprover = (
             onBlur={() => setTimeout(() => setIsFocus(false), 200)}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            disabled={finalApproval && approvers.length > 0}
           />
           <div className={"p-1 flex items-center justify-center"} onClick={() => setIsFocus(true)}>
             <Search className={`w-4 h-4  ${isFocus ? "text-gray-400" : "text-gray-800"}`} />
@@ -141,9 +144,9 @@ export const ApproverField = (
         setApprovers(newApprovers)
     }
     return (
-        <div className={` ${className} p-3 flex flex-wrap bg-white text-black text-center rounded`}>
+        <div className={` ${className} flex flex-wrap bg-white text-black text-center rounded`}>
           {approvers.map((approver, index) => (
-            <div className="bg-gray-300 rounded flex items-center px-1 mr-1 mb-1 flex w-fit h-fit" key={index}>
+            <div className="bg-gray-300 rounded flex items-center px-1 mr-1 mb-1 flex w-fit h-5" key={index}>
               <span className="text-sm">{approver.name}</span>
               <div className="text-lg rotate-45 px-1 cursor-pointer" onClick={() => removeApprover(approver.id)}>
                 +

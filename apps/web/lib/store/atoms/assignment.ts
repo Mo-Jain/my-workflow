@@ -9,8 +9,19 @@ export interface Item {
     status: string,
     from: string,
     startDate:Date,
-    creatorId: string
+    creatorId: string,
+    currentApproval?: Approval
   }
+
+interface Approval {
+    approvalId: string,
+    step: string,
+    parentApprovalId?: string,
+    parentApprovalName?: string,
+    parentApprovalComments?: string,
+    parentApprovalStatus?: string,
+}
+
 export const assignmentState = atom<{isLoading:boolean,items: Item[] }>({
   key: "assignmentState",
   default: {

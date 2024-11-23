@@ -79,16 +79,12 @@ export default function Admin(){
   const [newFolderName, setNewFolderName] = useState('')
   const [newFolderParentId, setNewFolderParentId] = useState(ENTERPRISE_FOLDER_ID)
   const [isRecentlyViewedDialogOpen, setIsRecentlyViewedDialogOpen] = useState(false)
-  const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false)
   const [isWorkflowDialogOpen, setIsWorkflowDialogOpen] = useState(false)
   const [fileId, setFileId] = useState('');
-  const [newAssignmentName, setNewAssignmentName] = useState('')
-  const [newAssignmentLocation, setNewAssignmentLocation] = useState('');
   const [newCurrentStep, setNewCurrentStep] = useState('');
   const [newWorkflowName, setNewWorkflowName] = useState('')
   const setWorkflow = useSetRecoilState(workflowState);
   const setRecentlyViewed = useSetRecoilState(recentlyViewedState);
-  const setAssignments = useSetRecoilState(assignmentState);
   const [approvalRecords,setApprovalRecords] = useState([]);
   const [workflowDataList,setWorkflowDataList] = useState([]);
 
@@ -129,7 +125,7 @@ export default function Admin(){
     await deleteFunction("workflowData",setWorkflowDataList,id);
   }
 
-  async function deleteApprovalRecord(id:string,userId:string){
+  async function deleteApprovalRecord(id:string){
     try{
       const res = await axios.delete(`${BASE_URL}/api/v1/admin/approvlRecord/${id}`);
       setAssignmentsList((items:any) => items.filter((item:any) => item.id !== id));
@@ -199,45 +195,7 @@ export default function Admin(){
     });
   }
 
-  const handleCreateAssignment = async () => {
-    try{
-      const payload = {
-        name: newAssignmentName,
-        location: newAssignmentLocation
-      }
-      const res = await axios.post(`${BASE_URL}/api/v1/assignment`,
-        payload,{
-        headers: {
-          "Content-type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        },
-      });
-      
-      toaster("created",res.data.id,false);
-    }catch(e){
-      toaster("create",'',true);
-    }
-    setIsAssignmentDialogOpen(false);
-    const res = await axios.get(`${BASE_URL}/api/v1/admin/assignments`);
-    setAssignmentsList(res.data.assignmentData);
-    const assignments = res.data.assignmentData.map((assignment:any) => ({
-      id: assignment.id,
-      name: assignment.name,
-      location: assignment.location,
-      dueDate: assignment.dueDate ?? null,
-      priority: assignment.priority,
-      status: assignment.status,
-      from: assignment.from,
-    }));
-    setAssignments({
-      isLoading:false,
-      items:assignments
-    });
-    
-    setNewAssignmentName('');
-    setNewAssignmentLocation('');
-    
-  }
+ 
 
   const handleCreateWorkflow = async () => {
     try{
@@ -270,7 +228,8 @@ export default function Admin(){
       workflowName: workflow.workflowName,
       currentStep: workflow.currentStep,
       assignedTo: workflow.assignedTo,
-      startDate: workflow.startDate
+      startDate: workflow.startDate,
+      actions:workflow.actions
     }));
     setWorkflow({
       isLoading:false,
@@ -503,6 +462,7 @@ export default function Admin(){
                     <TableHead>Assigned Date</TableHead>
                     <TableHead>Approval Date</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
                     <TableHead>Delete</TableHead>
                 </TableRow>
                 </TableHeader>
@@ -516,8 +476,9 @@ export default function Admin(){
                         <TableCell>{approvalRecord.assignedDate}</TableCell>
                         <TableCell>{approvalRecord.approvalDate}</TableCell>
                         <TableCell>{approvalRecord.status}</TableCell>
+                        <TableCell>{approvalRecord.actions}</TableCell>
                         <TableCell>
-                            <Button className="bg-red-500 text-white" onClick={()=>{deleteApprovalRecord(approvalRecord.workflowId,approvalRecord.userId)}}>
+                            <Button className="bg-red-500 text-white" onClick={()=>{deleteApprovalRecord(approvalRecord.id)}}>
                             <TrashIcon className="h-4 w-4" />
                             </Button>
                         </TableCell>
@@ -664,40 +625,7 @@ export default function Admin(){
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-            <Dialog open={isAssignmentDialogOpen} onOpenChange={setIsAssignmentDialogOpen}>
-              <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add Assignments</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="name" className="text-right">
-                     Assignment Name
-                    </Label>
-                    <Input
-                      id="name"
-                      value={newAssignmentName}
-                      onChange={(e) => setNewAssignmentName(e.target.value)}
-                      className="col-span-3"
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="assignmentLocationId" className="text-right">
-                     Assignment Location
-                    </Label>
-                    <Input
-                      id="assignmentLocationId"
-                      value={newAssignmentLocation}
-                      onChange={(e) => setNewAssignmentLocation(e.target.value)}
-                      className="col-span-3"
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="submit" onClick={handleCreateAssignment}>Create Recently viewed</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            
             <Dialog open={isWorkflowDialogOpen} onOpenChange={setIsWorkflowDialogOpen}>
               <DialogContent>
               <DialogHeader>

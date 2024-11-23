@@ -154,14 +154,14 @@ export default function NFAReport() {
       </div>
 
       {/* Controls */}
-      <div className="p-4 border-b">
+      <div className="p-4 border-b bg-gray-50">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Button variant="outline" className="h-8">
-              Column visibility
+              Export To Excel
             </Button>
             <Button variant="outline" className="h-8">
-              Export To Excel
+              Column visibility
             </Button>
             <Button variant="outline" className="h-8">
               PDF

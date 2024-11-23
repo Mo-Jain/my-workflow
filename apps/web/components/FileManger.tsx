@@ -241,7 +241,7 @@ export default function FileManager({
                       </TableCell>
                     )}
                     {Object.entries(item)
-                      .filter(([key]) => key !== "id" && key !== "type" && key !== "isFavorite")
+                      .filter(([key]) => key !== "id" && key !== "type" && key !== "isFavorite" && key !=="contentType")
                       .map(([key, value], index) => (
                         <TableCell key={key} className="items-center gap-2">
                           <div className="flex items-center gap-2">

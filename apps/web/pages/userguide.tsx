@@ -71,7 +71,8 @@ interface File {
   items?: string,
   size?: string,
   modifiedAt: string,
-  isFavorite: boolean
+  isFavorite: boolean,
+  contentType?: string,
 }
 export default function UserGuides() {
   const [selectedFiles, setSelectedFiles] = useState<string[]>([])

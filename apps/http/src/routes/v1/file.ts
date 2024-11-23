@@ -2,6 +2,17 @@ import { Router} from "express";
 import { middleware } from "../../middleware";
 import client from "@repo/db/client";
 import { deleteFileSchema, createFileSchema, updateFileSchema } from "../../types";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3 } from "aws-sdk"
+import { deleteObjectFromS3, generatePresignedUrl } from "../../utils/s3";
+
+
+
+const s3 = new S3({
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    endpoint: process.env.S3_ENDPOINT
+})
 
 export const fileRouter = Router();   
 
@@ -24,8 +35,12 @@ fileRouter.post("/", middleware, async (req, res) => {
             res.status(403).json({message: "Not Authorized to create"})
             return
         }
+        
+        const name = parsedData.data.name;
+        const path = parentFolder?.path + "/" + name;
+        const contentType = parsedData.data.contentType ?? "application/octet-stream";
+        const signedUrl = await generatePresignedUrl(req.userId+path, contentType);
 
-        let name = parsedData.data.name;
         let message = "File created successfully";
         const createdDate = parsedData.data.modifiedAt ? new Date(parsedData.data.modifiedAt) : new Date();
         
@@ -34,16 +49,18 @@ fileRouter.post("/", middleware, async (req, res) => {
                 name: name,
                 creatorId: req.userId!,
                 parentFolderId: parsedData.data.parentFolderId,
-                path: parentFolder?.path + "/" + parentFolder?.name,
+                path: path,
                 size: parsedData.data.size,
                 type: parsedData.data.type,
-                createdAt: createdDate
+                createdAt: createdDate,
+                contentType: contentType
             }
         })
 
         res.json({
             message,
-            id: file.id
+            id: file.id,
+            url:signedUrl
         })
     } catch(e) {    
         res.status(400).json({message: "Internal server error"})
@@ -144,6 +161,13 @@ fileRouter.delete("/:fileId", middleware, async (req, res, next) => {
             res.status(403).json({message: "Not Authorized to delete"})
             return
         }
+
+        if(!file){
+            res.status(404).json({message: "File not found"})
+            return
+        }
+
+        await deleteObjectFromS3(req.userId+file.path);
 
         await client.file.delete({
             where: {

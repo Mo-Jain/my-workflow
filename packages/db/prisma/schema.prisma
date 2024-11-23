@@ -41,7 +41,8 @@ model Workflows {
   currentAssigneeId   String?
   stopDate            DateTime?
   type                String      
-  approvalDate        DateTime?       
+  approvalDate        DateTime?   
+  actions             String?    
   // One-to-Many Relation: Creator
   creator             User               @relation("CreatorRelation", fields: [creatorId], references: [id])
   currentAssigneeUser User?              @relation("AssigneeRelation", fields: [currentAssigneeId], references: [id])
@@ -53,6 +54,7 @@ model Workflows {
 
 
 model ApprovalRecord {
+  id                 Int                 @id @default(autoincrement())
   userId             String              // The user who approved
   workflowId         Int                 // The workflow approved
   approvalDate       DateTime?             // Date of approval
@@ -61,11 +63,15 @@ model ApprovalRecord {
   order              Int                 @default(1)
   status             String?
   step               String
+
+    // Optional parent approval for review tracking and forwarding
+  parentApprovalId  Int?                // Links to the parent approval
+  parentApproval    ApprovalRecord?     @relation("ApprovalReview", fields: [parentApprovalId], references: [id])
+  reviews           ApprovalRecord[]    @relation("ApprovalReview")
   // Relations
   user               User                @relation(fields: [userId], references: [id])
   workflow           Workflows           @relation(fields: [workflowId], references: [id])
 
-  @@id([userId, workflowId])         // Prevent duplicate approvals by the same user
 }
 
 
@@ -100,9 +106,9 @@ model File {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   RecentlyViewed   RecentlyViewed[]
-  worflows         Workflows?        @relation(fields: [workflowId], references: [id])
+  worflows         Workflows?       @relation(fields: [workflowId], references: [id])
   workflowId       Int?
-
+  contentType      String
   @@unique([ parentFolderId, name])
 }
 
