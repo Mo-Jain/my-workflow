@@ -1,5 +1,5 @@
 {
-  "name": "opentext",
+  "name": "my-workflows",
   "private": true,
   "scripts": {
     "build": "turbo build",

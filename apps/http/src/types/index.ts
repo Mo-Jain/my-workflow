@@ -39,7 +39,8 @@ export const createFileSchema = z.object({
   size: z.string(),
   type: z.string(),
   modifiedAt: z.number().optional(),
-  contentType: z.string()
+  contentType: z.string().optional(),
+  parentFileId: z.string().optional()
 });
 
 export const deleteFileSchema = z.object({

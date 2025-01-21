@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand,DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand,DeleteObjectCommand, CopyObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 require("dotenv").config();
 import { S3 } from "aws-sdk"
@@ -44,5 +44,25 @@ export const deleteObjectFromS3 = async (key:string) => {
       throw new Error("Could not delete object from S3");
     }
   };
-  
 
+  
+export const copyFileInS3 = async (
+    sourceKey: string,
+    destinationKey: string
+  ): Promise<void> => {
+    try {
+      const bucketName = process.env.AWS_BUCKET_NAME!;
+      
+      const command = new CopyObjectCommand({
+        Bucket: bucketName,
+        CopySource: `${bucketName}/${sourceKey}`, // Format: "bucket-name/source-key"
+        Key: destinationKey, // New key in the destination folder
+      });
+  
+      await s3.send(command);
+      console.log(`File copied from ${sourceKey} to ${destinationKey}`);
+    } catch (error) {
+      console.error("Error copying file in S3:", error);
+      throw new Error("Could not copy file in S3");
+    }
+  };

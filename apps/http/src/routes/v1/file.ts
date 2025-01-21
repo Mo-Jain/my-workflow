@@ -4,7 +4,7 @@ import client from "@repo/db/client";
 import { deleteFileSchema, createFileSchema, updateFileSchema } from "../../types";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { S3 } from "aws-sdk"
-import { deleteObjectFromS3, generatePresignedUrl } from "../../utils/s3";
+import { copyFileInS3, deleteObjectFromS3, generatePresignedUrl } from "../../utils/s3";
 
 
 
@@ -35,11 +35,28 @@ fileRouter.post("/", middleware, async (req, res) => {
             res.status(403).json({message: "Not Authorized to create"})
             return
         }
-        
+
         const name = parsedData.data.name;
         const path = parentFolder?.path + "/" + name;
         const contentType = parsedData.data.contentType ?? "application/octet-stream";
-        const signedUrl = await generatePresignedUrl(req.userId+path, contentType);
+
+        let signedUrl = "";
+
+        if(parsedData.data.parentFileId){
+            const parentFile = await client.file.findFirst({
+                where: {
+                    id: parsedData.data.parentFileId
+                }
+            })
+            if(!parentFile){
+                res.status(404).json({message: "Parent file not found"})
+                return
+            }
+            await copyFileInS3(parentFile.creatorId+parentFile.path,req.userId+path);
+        }
+        else{
+            signedUrl = await generatePresignedUrl(req.userId+path, contentType);
+        }
 
         let message = "File created successfully";
         const createdDate = parsedData.data.modifiedAt ? new Date(parsedData.data.modifiedAt) : new Date();

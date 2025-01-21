@@ -451,7 +451,7 @@ export default function Admin(){
                 </TableBody>
             </Table>
             <br/><br/>
-            <h2 className="text-lg font-semibold">Approval Data</h2>
+            <h2 className="text-lg font-semibold">Approval Record</h2>
             <Table>
                 <TableHeader className="bg-gray-100">
                 <TableRow>

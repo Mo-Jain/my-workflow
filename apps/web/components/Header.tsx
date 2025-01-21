@@ -42,7 +42,6 @@ const Header = ({
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [progress, setProgress] = useState(0);
-
     const [uploadStatus, setUploadStatus] = useState<"Loading..." | "Uploading..." | "Success" | "Error">();
 
     const handleCreateFolder = async () => {
@@ -122,19 +121,6 @@ const Header = ({
       }
 
       try {
-         // Get a pre-signed URL from the server
-        // const response = await axios.post(
-        //   `${BASE_URL}/api/v1/aws/s3-presigned-url`,
-        //   {
-        //     fileName: uniqueFileName,
-        //     fileType: file.type,
-        //   },
-        //   {
-        //     headers: {
-        //       "Authorization": `Bearer ${localStorage.getItem("token")}`,
-        //     },
-        //   }
-        // );
 
         const size = parseInt((file.size / 1024).toFixed(2));
         const payload = {

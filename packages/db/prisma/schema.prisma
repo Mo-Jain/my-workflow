@@ -44,7 +44,7 @@ model Workflows {
   approvalDate        DateTime?   
   actions             String?    
   // One-to-Many Relation: Creator
-  creator             User               @relation("CreatorRelation", fields: [creatorId], references: [id])
+  creator             User               @relation("CreatorRelation", fields: [creatorId], references: [id], onDelete: Cascade)
   currentAssigneeUser User?              @relation("AssigneeRelation", fields: [currentAssigneeId], references: [id])
   files               File[]
   // Many-to-Many Relation: Assignees
@@ -69,8 +69,8 @@ model ApprovalRecord {
   parentApproval    ApprovalRecord?     @relation("ApprovalReview", fields: [parentApprovalId], references: [id])
   reviews           ApprovalRecord[]    @relation("ApprovalReview")
   // Relations
-  user               User                @relation(fields: [userId], references: [id])
-  workflow           Workflows           @relation(fields: [workflowId], references: [id])
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workflow           Workflows           @relation(fields: [workflowId], references: [id], onDelete: Cascade)
 
 }
 
@@ -78,9 +78,9 @@ model ApprovalRecord {
 model Folder {
   id               String           @id @default(uuid())
   name             String
-  user             User?             @relation(fields: [creatorId], references: [id])
+  user             User?            @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   creatorId        String?
-  parentFolder     Folder?          @relation("Subfolders", fields: [parentFolderId], references: [id])
+  parentFolder     Folder?          @relation("Subfolders", fields: [parentFolderId], references: [id], onDelete: Cascade)
   parentFolderId   String?
   isFavorite       Boolean          @default(false)
   path             String
@@ -95,11 +95,11 @@ model Folder {
 model File {
   id               String           @id @default(uuid())
   name             String
-  user             User             @relation(fields: [creatorId], references: [id])
+  user             User             @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   creatorId        String
   type             String
   size             String
-  parentFolder     Folder?          @relation(fields: [parentFolderId], references: [id]) // Parent folder for file
+  parentFolder     Folder?          @relation(fields: [parentFolderId], references: [id], onDelete: Cascade) // Parent folder for file
   parentFolderId   String?
   isFavorite       Boolean          @default(false)
   path             String
@@ -115,9 +115,9 @@ model File {
 
 model RecentlyViewed {
   id               String           @id @default(uuid())
-  user             User             @relation(fields: [userId], references: [id])
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId           String
-  file             File             @relation(fields: [fileId], references: [id])
+  file             File             @relation(fields: [fileId], references: [id], onDelete: Cascade)
   fileId           String
   lastViewedAt     DateTime         @default(now())
 
@@ -128,9 +128,9 @@ model RecentlyViewed {
 model workflowData {
   id               String           @id @default(cuid())
   workflowId       Int
-  workflow         Workflows         @relation("workflowData", fields: [workflowId], references: [id])
+  workflow         Workflows         @relation("workflowData", fields: [workflowId], references: [id], onDelete: Cascade)
   userId           String
-  user             User              @relation(fields: [userId], references: [id])
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   workflowType     String
   workflowName     String
   department       String

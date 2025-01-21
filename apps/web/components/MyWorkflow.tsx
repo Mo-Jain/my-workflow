@@ -21,7 +21,7 @@ import { Workflow } from "@/lib/store/atoms/workflow"
 // Sample data - in a real app this would come from your backend
 
 
-export default function Component(
+export default function MyWorkflow(
   {onClose}:
   {onClose:()=>void}
 ) {

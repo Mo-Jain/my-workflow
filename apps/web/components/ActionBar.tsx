@@ -1,17 +1,16 @@
 'use client'
 import { Copy, Clipboard, Trash, Edit2, Workflow } from "lucide-react";
-
-
 import { Button } from "./ui/button";
 import axios from "axios";
 import { BASE_URL } from "@/next.config";
 import { toaster } from "@/pages/admin";
 import { copyItemState } from "@/lib/store/atoms/copyItem";
-import { useRecoilState, useSetRecoilState } from "recoil";
+import { useRecoilState } from "recoil";
 import { useState } from "react";
 import { createUniqueName } from "./FileManger";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import StartWorkflow from "./StartWorkflow";
+import ProgressBar from "./ProgressBar";
 
 
 interface File {
@@ -52,6 +51,8 @@ const ActionBar = (
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [isWorkflowDialogOpen, setIsWorkflowDialogOpen] = useState(false);
     const [type, setType] = useState<string>();
+    const [progress, setProgress] = useState(0);
+    const [uploadStatus, setUploadStatus] = useState<"Loading..." | "Pasting..." | "Success" | "Error">();
 
   
     const deleteItems = async () => {
@@ -85,6 +86,7 @@ const ActionBar = (
     }
   
     const pasteFileOrFolder = async (item: any) => {
+      setUploadStatus("Loading...");
       const date = new Date();
       const unixTimestampInSeconds = Math.floor(date.getTime() / 1000);
       const {uniqueName,type} = createUniqueName(item.name,items);
@@ -94,7 +96,7 @@ const ActionBar = (
           size: item.size,
           type: item.type,
           modifiedAt: unixTimestampInSeconds,
-          contentType: item.contentType
+          parentFileId: item.id
       };
   
       try {
@@ -114,17 +116,23 @@ const ActionBar = (
                   { id: res.data.id, name: uniqueName, items: "0", type: "folder", modifiedAt: date.toISOString(), isFavorite: false }
               ]);
           } else {
+              setUploadStatus("Pasting...");
               console.log("inside else",payload); 
               payload.name = uniqueName;
               const res = await axios.post(`${BASE_URL}/api/v1/file`, payload, {
                   headers: {
                       "Content-type": "application/json",
                       "Authorization": `Bearer ${localStorage.getItem("token")}`
-                  }
+                  },
+                  onUploadProgress: (progressEvent) => {
+                    const percentCompleted = Math.round(
+                      (progressEvent.loaded * 100) / progressEvent.total!
+                    );
+                  setProgress(percentCompleted);
+                  },
               });
-
-              
-  
+              setUploadStatus("Success");
+              setProgress(0);
               setItems(prevItems => [
                 ...prevItems,
                   { id: res.data.id, name: uniqueName, size: item.size, type: item.type, modifiedAt: date.toISOString(), isFavorite: false }
@@ -133,7 +141,14 @@ const ActionBar = (
           toaster("pasted", item.id, false);
       } catch (e) {
           toaster("paste", item.id, true);
+          console.log("error",e);
       }
+      setUploadStatus(undefined);
+
+      return () =>{
+        setUploadStatus(undefined);
+        setProgress(0);
+      } 
     };
   
     const pasteItems = async () => {
@@ -184,8 +199,14 @@ const ActionBar = (
     
   
   return (
-    <div>
-        <div className="flex justify-end space-x-2 items-center py-2 bg-white text-black">
+    <div className="flex px-4 ">
+        <div className="flex space-x-2 items-center py-2 bg-white text-black">
+          <div>{uploadStatus}</div>
+          {progress > 0 && <div className="min-w-[200px] ">
+            <ProgressBar progress={progress} />
+          </div>}
+        </div>
+        <div className="flex w-full justify-end space-x-2 items-center py-2 bg-white text-black">
             <Button onClick={copySelectedItems} disabled={selectedItems.length === 0} className="bg-white text-black hover:bg-gray-300">
               <Copy className="h-4 w-4" />
               Copy
